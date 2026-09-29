@@ -137,7 +137,7 @@ function debounce(fn, ms) {
 function showError(err) {
   const box = $('errorBox');
   box.hidden = false;
-  box.textContent = typeof err === 'string' ? err : `${err.ffmpeg ? 'ffmpeg 오류\n' : ''}${err.message || err}`;
+  box.querySelector('p').textContent = typeof err === 'string' ? err : `${err.ffmpeg ? 'ffmpeg 오류\n' : ''}${err.message || err}`;
   console.error(err);
 }
 function clearError() { $('errorBox').hidden = true; }
@@ -299,7 +299,7 @@ async function openFile(file) {
       // 인트로 화면에서도 오류를 보여준다
       const note = drop.querySelector('.drop-note');
       note.textContent = `열 수 없어요: ${err.message || err}`;
-      note.style.color = 'var(--danger)';
+      note.style.color = 'var(--status-negative)';
     }
   } finally {
     busy.hidden = true;
@@ -326,7 +326,7 @@ function renderFileInfo() {
   if (i.converted) notes.push(`${i.srcPixFmt} 형식은 직접 다루지 못해 ${i.pixFmt}로 변환해 처리해요(아주 작은 변환 오차가 생길 수 있어요).`);
   if (i.bits > 8) notes.push(`${i.bits}bit 영상이라 무손실 MP4 대신 무손실 MKV(FFV1)로 저장해요.`);
   $('fileNotice').hidden = !notes.length;
-  $('fileNotice').textContent = notes.join(' ');
+  $('fileNotice').querySelector('p').textContent = notes.join(' ');
   // 저장 형식 가능 여부
   for (const input of document.querySelectorAll('input[name="output"]')) {
     const ok = i.bits <= OUTPUTS[input.value].maxBits;
@@ -442,9 +442,10 @@ function drawSpectrum() {
       g = Math.pow(g, 0.9) * 220 + 12;
       const m = state.mask ? state.mask[k] * 0.62 : 0;
       const o = (py * c.width + px) * 4;
-      d[o] = g * (1 - m) + 229 * m;
-      d[o + 1] = g * (1 - m) + 72 * m;
-      d[o + 2] = g * (1 - m) + 77 * m;
+      // WDS status.negative (#FF4242)
+      d[o] = g * (1 - m) + 255 * m;
+      d[o + 1] = g * (1 - m) + 66 * m;
+      d[o + 2] = g * (1 - m) + 66 * m;
       d[o + 3] = 255;
     }
   }
@@ -461,8 +462,8 @@ function drawSpectrum() {
     }
   };
   ctx.save();
-  for (const p of visiblePeaks()) ring(p, p.on, p.on ? '#f0c36b' : 'rgba(240,195,107,0.55)');
-  for (const p of state.custom) ring(p, true, '#8fd6b0');
+  for (const p of visiblePeaks()) ring(p, p.on, p.on ? '#FF9200' : 'rgba(255,146,0,0.55)'); // status.cautionary
+  for (const p of state.custom) ring(p, true, '#3385FF'); // primary (dark)
   ctx.restore();
 }
 
@@ -587,7 +588,7 @@ function render() {
   const W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
   if (view.width !== W || view.height !== H) { view.width = W; view.height = H; }
   const ctx = view.getContext('2d');
-  ctx.fillStyle = '#08090a';
+  ctx.fillStyle = '#0F0F10';
   ctx.fillRect(0, 0, W, H);
   if (!canvases.orig.width) return;
   clampCenter();
@@ -928,7 +929,7 @@ function showResult({ blob, audioNote }, { frames, stats, mode, seconds }) {
   if (audioNote) notes.push(audioNote);
   if (mode === 'lossless') notes.push('무손실 H.264(High 4:4:4 Predictive)는 QuickTime·아이폰·일부 브라우저에서 재생되지 않을 수 있어요. VLC, Premiere, DaVinci Resolve에서는 열려요.');
   $('resultNote').hidden = !notes.length;
-  $('resultNote').textContent = notes.join(' ');
+  $('resultNote').querySelector('p').textContent = notes.join(' ');
   $('actionBlock').hidden = true;
   $('resultBlock').hidden = false;
   $('resultBlock').scrollIntoView({ behavior: 'smooth', block: 'nearest' });

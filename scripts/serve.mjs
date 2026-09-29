@@ -10,7 +10,7 @@ const types = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.wasm': 'application/wasm', '.json': 'application/json', '.svg': 'image/svg+xml',
-  '.png': 'image/png', '.ico': 'image/x-icon',
+  '.png': 'image/png', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.ico': 'image/x-icon',
 };
 const port = Number(process.env.PORT || 5173);
 

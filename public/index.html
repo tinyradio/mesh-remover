@@ -5,26 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' blob: data:; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
   <title>그물지우개 — 영상 그물무늬 제거</title>
   <meta name="description" content="AI 영상의 그물무늬(격자 무늬)만 골라서 지우고 무손실로 다시 저장합니다. 영상은 브라우저 밖으로 나가지 않아요.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="src/app.js"></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="그물지우개 처음으로">
-      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 15 15 7M7 21 21 7M9 25 25 9M15 25 25 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".35"/><path d="M8 24 24 8" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/></svg>
-      <span>그물지우개</span>
-    </a>
-    <div class="topbar-right">
-      <span class="pill pill-lock" title="영상은 업로드되지 않으며, 보안 정책(CSP)으로 외부 전송이 차단되어 있어요.">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
-        로컬 전용 · 업로드 없음
-      </span>
-      <span class="pill pill-engine" id="engineStatus" data-state="loading">
-        <span class="dot"></span><span class="label">엔진 준비 중</span>
-      </span>
+    <div class="topbar-inner">
+      <a class="brand" href="./" aria-label="그물지우개 처음으로">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="currentColor"/><path d="M8 16 16 8M8 22 22 8M10 24 24 10M16 24 24 16" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".4"/><path d="M9 23 23 9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span>그물지우개</span>
+      </a>
+      <div class="topbar-right">
+        <span class="chip chip-lock" title="영상은 업로드되지 않으며, 보안 정책(CSP)으로 외부 전송이 차단되어 있어요.">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.9999 2.34961C10.652 2.34961 9.30184 2.90022 8.34946 3.84224L8.34598 3.8457C7.53354 4.65813 7.11632 5.61942 6.95121 6.8626L6.95054 6.86771C6.87504 7.4623 6.84988 8.16384 6.84988 9.19958V9.60527C6.65538 9.60944 6.4764 9.6169 6.31311 9.63024C5.92396 9.66203 5.54536 9.73167 5.18343 9.91608C4.63776 10.1941 4.19412 10.6378 3.91609 11.1834C3.73168 11.5454 3.66204 11.924 3.63025 12.3131C3.59998 12.6835 3.59999 13.1347 3.60001 13.6645V17.8354C3.59999 18.3652 3.59998 18.8165 3.63025 19.1869C3.66204 19.576 3.73168 19.9546 3.91609 20.3166C4.19412 20.8622 4.63776 21.3059 5.18343 21.5839C5.54536 21.7683 5.92396 21.838 6.31311 21.8698C6.68354 21.9 7.13472 21.9 7.66459 21.9H16.3354C16.8652 21.9 17.3164 21.9 17.6868 21.8698C18.076 21.838 18.4546 21.7683 18.8165 21.5839C19.3622 21.3059 19.8058 20.8622 20.0839 20.3166C20.2683 19.9546 20.3379 19.576 20.3697 19.1869C20.4 18.8165 20.4 18.3653 20.3999 17.8354V13.6646C20.4 13.1347 20.4 12.6835 20.3697 12.3131C20.3379 11.924 20.2683 11.5454 20.0839 11.1834C19.8058 10.6378 19.3622 10.1941 18.8165 9.91608C18.4546 9.73167 18.076 9.66203 17.6868 9.63024C17.5235 9.61689 17.3444 9.60943 17.1498 9.60527V9.19958C17.1498 8.1145 17.1247 7.4231 17.0584 6.87325L17.0566 6.85981C16.8912 5.64343 16.4656 4.6576 15.6537 3.8457L15.6503 3.84227C14.6891 2.89141 13.3557 2.34961 11.9999 2.34961ZM15.3498 9.6V9.19958C15.3498 8.13118 15.3242 7.53125 15.2721 7.09566C15.1482 6.19193 14.8606 5.59885 14.3827 5.12024C13.763 4.50814 12.8872 4.14961 11.9999 4.14961C11.1215 4.14961 10.2286 4.5163 9.61701 5.12025C9.13895 5.59901 8.85978 6.16686 8.73587 7.09702C8.67561 7.57305 8.64987 8.18015 8.64987 9.19958V9.6H15.3498ZM6.16008 11.4537C6.2916 11.4109 6.48544 11.3998 7.29999 11.3998H16.7C17.5145 11.3998 17.7084 11.4109 17.8399 11.4537C18.1748 11.5625 18.4373 11.825 18.5461 12.1599C18.5889 12.2914 18.6 12.4853 18.6 13.2998V18.1998C18.6 19.0144 18.5889 19.2082 18.5461 19.3398C18.4373 19.6746 18.1748 19.9372 17.8399 20.046C17.7084 20.0887 17.5145 20.0998 16.7 20.0998H7.29999C6.48544 20.0998 6.2916 20.0887 6.16008 20.046C5.8252 19.9372 5.56265 19.6746 5.45384 19.3398C5.41111 19.2082 5.4 19.0144 5.4 18.1998V13.2998C5.4 12.4853 5.41111 12.2914 5.45384 12.1599C5.56265 11.825 5.8252 11.5625 6.16008 11.4537Z" fill="currentColor"/></svg>
+          로컬 전용 · 업로드 없음
+        </span>
+        <span class="chip chip-engine" id="engineStatus" data-state="loading">
+          <span class="dot"></span><span class="label">엔진 준비 중</span>
+        </span>
+      </div>
     </div>
   </header>
 
@@ -32,26 +36,25 @@
     <section class="intro" id="intro">
       <div class="intro-copy">
         <p class="eyebrow">AI 영상 후보정</p>
-        <h1>숲 바닥의 모기장 무늬,<br>그 줄무늬만 골라서 지워요.</h1>
-        <p class="lead">AI가 영상을 키울 때 남기는 "롤러 자국"은 항상 같은 각도·같은 간격이에요. 그래서 흐리게 뭉개지 않고, 그 주파수만 정확히 빼낼 수 있어요. 나뭇잎과 지푸라기는 그대로 남습니다.</p>
+        <h1>숲 바닥의 모기장 무늬,<br>그 줄무늬만 골라서 지워요</h1>
+        <p class="lead">AI가 영상을 키울 때 남기는 "롤러 자국"은 항상 같은 각도·같은 간격이에요. 그래서 흐리게 뭉개지 않고 그 주파수만 정확히 빼낼 수 있어요. 나뭇잎과 지푸라기는 그대로 남습니다.</p>
         <ol class="steps">
-          <li><span class="num">01</span><div><strong>영상 넣기</strong><p>파일은 이 브라우저 탭 안에서만 열려요.</p></div></li>
-          <li><span class="num">02</span><div><strong>무늬 확인</strong><p>주파수 지도와 5배 돋보기로 전후를 비교해요.</p></div></li>
-          <li><span class="num">03</span><div><strong>무손실 저장</strong><p>다시 압축 손실 없이 합치고, 오디오는 원본 그대로.</p></div></li>
+          <li><span class="step-num">1</span><div><strong>영상 넣기</strong><p>파일은 이 브라우저 탭 안에서만 열려요.</p></div></li>
+          <li><span class="step-num">2</span><div><strong>무늬 확인</strong><p>주파수 지도와 5배 돋보기로 전후를 비교해요.</p></div></li>
+          <li><span class="step-num">3</span><div><strong>무손실 저장</strong><p>다시 압축 손실 없이 합치고, 오디오는 원본 그대로.</p></div></li>
         </ol>
       </div>
       <label class="drop" id="drop" tabindex="0">
         <input type="file" id="fileInput" accept="video/*,.mkv,.mov,.mp4,.webm,.avi,.m4v" hidden>
         <div class="drop-inner">
-          <div class="drop-icon" aria-hidden="true">
-            <svg viewBox="0 0 48 48"><rect x="6" y="11" width="36" height="26" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M20 19.5v9l8-4.5z" fill="currentColor"/></svg>
-          </div>
+          <div class="drop-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11.9999 2.59961C12.2575 2.59961 12.4897 2.70777 12.6538 2.88114L17.1363 7.3637C17.4878 7.71517 17.4878 8.28502 17.1363 8.63649C16.7848 8.98797 16.215 8.98797 15.8635 8.63649L12.8999 5.67289V14.9996C12.8999 15.4967 12.497 15.8996 11.9999 15.8996C11.5029 15.8996 11.0999 15.4967 11.0999 14.9996V5.67289L8.13635 8.63649C7.78488 8.98797 7.21503 8.98797 6.86356 8.63649C6.51209 8.28502 6.51209 7.71517 6.86356 7.3637L11.3461 2.88115C11.5101 2.70777 11.7424 2.59961 11.9999 2.59961Z" fill="currentColor"/><path d="M21.1501 14.8997C21.1501 14.4026 20.7472 13.9997 20.2501 13.9997C19.7531 13.9997 19.3502 14.4026 19.3502 14.8997V17.4498C19.3502 18.2644 19.3391 18.4582 19.2963 18.5897C19.1875 18.9246 18.925 19.1872 18.5901 19.296C18.4586 19.3387 18.2647 19.3498 17.4502 19.3498H6.5502C5.73564 19.3498 5.54181 19.3387 5.41029 19.296C5.07541 19.1872 4.81285 18.9246 4.70405 18.5897C4.66131 18.4582 4.65021 18.2644 4.65021 17.4498V14.8997C4.65021 14.4027 4.24726 13.9997 3.7502 13.9997C3.25314 13.9997 2.85019 14.4027 2.85019 14.8997V17.0852C2.85018 17.615 2.85017 18.0663 2.88043 18.4367C2.91223 18.8259 2.98186 19.2044 3.16627 19.5664C3.44431 20.112 3.88795 20.5557 4.43362 20.8337C4.79555 21.0181 5.17414 21.0878 5.5633 21.1196C5.93371 21.1498 6.38487 21.1498 6.9147 21.1498H17.0855C17.6154 21.1498 18.0666 21.1498 18.437 21.1196C18.8262 21.0878 19.2048 21.0181 19.5667 20.8337C20.1124 20.5557 20.556 20.112 20.834 19.5664C21.0185 19.2044 21.0881 18.8259 21.1199 18.4367C21.1502 18.0663 21.1501 17.6151 21.1501 17.0853V14.8997Z" fill="currentColor"/></svg></div>
           <p class="drop-title">영상을 여기로 끌어오세요</p>
-          <p class="drop-sub">또는 <u>클릭해서 선택</u> · MP4, MOV, MKV, WebM</p>
-          <p class="drop-note">서버로 전송되지 않아요. 네트워크를 끊어도 동작합니다(엔진 로딩 후).</p>
+          <p class="drop-sub">MP4, MOV, MKV, WebM</p>
+          <span class="btn btn-outlined btn-medium drop-btn">파일 선택</span>
+          <p class="drop-note">서버로 전송되지 않아요. 엔진을 받은 뒤에는 네트워크를 끊어도 동작합니다.</p>
         </div>
         <div class="drop-busy" id="dropBusy" hidden>
-          <div class="skeleton-bar"><span></span></div>
+          <div class="progress-indeterminate"><span></span></div>
           <p id="dropBusyText">영상 정보를 읽는 중</p>
         </div>
       </label>
@@ -64,7 +67,7 @@
           <div class="stage-label left" id="labelLeft">원본</div>
           <div class="stage-label right" id="labelRight">보정</div>
           <div class="split-line" id="splitLine"><span></span></div>
-          <div class="stage-loading" id="stageLoading" hidden><div class="skeleton-bar"><span></span></div><p>프레임 준비 중</p></div>
+          <div class="stage-loading" id="stageLoading" hidden><div class="progress-indeterminate"><span></span></div><p>프레임 준비 중</p></div>
         </div>
         <div class="toolbar">
           <div class="seg" role="group" aria-label="확대">
@@ -82,47 +85,47 @@
         </div>
         <div class="scrubber">
           <input type="range" id="scrub" min="0" max="1000" value="0" step="1" aria-label="미리볼 프레임 위치">
-          <span class="mono" id="scrubTime">0:00.00</span>
+          <span class="num" id="scrubTime">0:00.00</span>
         </div>
       </div>
 
       <aside class="panel">
-        <div class="block">
-          <div class="block-head"><h2>파일</h2><button type="button" class="link" id="changeFile">다른 영상</button></div>
+        <div class="card">
+          <div class="card-head"><h2>파일</h2><button type="button" class="text-btn" id="changeFile">다른 영상</button></div>
           <p class="file-name" id="fileName"></p>
           <dl class="meta" id="meta"></dl>
-          <p class="notice" id="fileNotice" hidden></p>
+          <div class="msg msg-cautionary" id="fileNotice" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.8203 3.10033C11.5711 2.76604 12.4285 2.76604 13.1793 3.10033C13.7027 3.33333 14.0805 3.76043 14.4088 4.22516C14.7343 4.68589 15.0924 5.30622 15.5282 6.06096L20.639 14.9133C21.0748 15.668 21.4329 16.2883 21.6692 16.8006C21.9075 17.3173 22.0885 17.858 22.0286 18.4277C21.9427 19.2451 21.514 19.9877 20.8491 20.4708C20.3856 20.8075 19.8268 20.9211 19.2602 20.9731C18.6984 21.0246 17.9821 21.0246 17.1106 21.0246H6.88896C6.01747 21.0246 5.30117 21.0246 4.73942 20.9731C4.17278 20.9211 3.614 20.8075 3.15055 20.4708C2.48563 19.9877 2.05693 19.2451 1.97102 18.4277C1.91114 17.858 2.09211 17.3173 2.33041 16.8006C2.56666 16.2883 2.92482 15.668 3.36057 14.9132L8.47142 6.06097C8.90715 5.30622 9.26529 4.68589 9.5908 4.22516C9.91914 3.76043 10.2969 3.33333 10.8203 3.10033ZM12 8.09961C12.497 8.09961 12.9 8.50255 12.9 8.99961V12.9996C12.9 13.4967 12.497 13.8996 12 13.8996C11.5029 13.8996 11.1 13.4967 11.1 12.9996V8.99961C11.1 8.50255 11.5029 8.09961 12 8.09961ZM12.9998 16.4996C12.9998 17.0519 12.5521 17.4996 11.9998 17.4996C11.4476 17.4996 10.9998 17.0519 10.9998 16.4996C10.9998 15.9473 11.4476 15.4996 11.9998 15.4996C12.5521 15.4996 12.9998 15.9473 12.9998 16.4996Z" fill="currentColor"/></svg><p></p></div>
         </div>
 
-        <div class="block">
-          <div class="block-head"><h2>무늬 지도</h2><span class="badge" id="scoreBadge">분석 중</span></div>
+        <div class="card">
+          <div class="card-head"><h2>무늬 지도</h2><span class="badge" id="scoreBadge">분석 중</span></div>
           <div class="spectrum-wrap">
             <canvas id="spectrum" width="256" height="256" aria-label="주파수 지도"></canvas>
             <div class="spectrum-legend">
               <p><i class="sw sw-red"></i>지울 영역</p>
               <p><i class="sw sw-ring"></i>튀는 점 (클릭해서 켜고 끄기)</p>
-              <p class="muted">가운데는 큰 모양, 바깥은 촘촘한 무늬예요. 그물무늬는 네 모서리의 대각선에 숨어 있어요.</p>
+              <p class="caption">가운데는 큰 모양, 바깥은 촘촘한 무늬예요. 그물무늬는 네 모서리의 대각선에 숨어 있어요.</p>
             </div>
           </div>
         </div>
 
-        <div class="block">
+        <div class="card">
           <h2>보정 설정</h2>
           <div class="field">
-            <div class="field-row"><label for="strength">강도</label><output class="mono" id="strengthOut">100%</output></div>
+            <div class="field-row"><label for="strength">강도</label><output class="num" id="strengthOut">100%</output></div>
             <input type="range" id="strength" min="0" max="100" value="100">
           </div>
           <div class="field">
-            <div class="field-row"><label for="period">대상 간격</label><output class="mono" id="periodOut">3.2px 이하</output></div>
+            <div class="field-row"><label for="period">대상 간격</label><output class="num" id="periodOut">3.2px 이하</output></div>
             <input type="range" id="period" min="2.2" max="6" step="0.1" value="3.2">
             <p class="help">이 값보다 촘촘한 대각선 줄무늬만 지워요. 무늬가 남으면 올리고, 디테일이 줄면 내리세요.</p>
           </div>
           <div class="field">
-            <div class="field-row"><label for="angle">각도 폭</label><output class="mono" id="angleOut">±22°</output></div>
+            <div class="field-row"><label for="angle">각도 폭</label><output class="num" id="angleOut">±22°</output></div>
             <input type="range" id="angle" min="6" max="40" step="1" value="22">
           </div>
           <div class="field">
-            <label>줄무늬 방향</label>
+            <span class="field-label">줄무늬 방향</span>
             <div class="seg seg-full" role="group" aria-label="줄무늬 방향" id="diagSeg">
               <button type="button" data-diag="both" class="on">양쪽 대각선</button>
               <button type="button" data-diag="rising">／ 방향</button>
@@ -131,7 +134,7 @@
           </div>
         </div>
 
-        <div class="block">
+        <div class="card">
           <h2>처리 구간</h2>
           <div class="seg seg-full" role="group" aria-label="처리 구간" id="rangeSeg">
             <button type="button" data-range="all" class="on">영상 전체</button>
@@ -139,13 +142,13 @@
           </div>
           <div class="field" id="rangeField" hidden>
             <label for="ranges">초 단위 구간</label>
-            <input type="text" id="ranges" placeholder="예: 0-2, 6-9" inputmode="decimal" autocomplete="off">
+            <input type="text" id="ranges" class="text-field" placeholder="예: 0-2, 6-9" inputmode="decimal" autocomplete="off">
             <p class="help">지정한 구간만 보정하고 나머지는 원본 픽셀 그대로 둬요. 경계는 0.2초에 걸쳐 부드럽게 전환돼요.</p>
-            <p class="error" id="rangeError" hidden></p>
+            <p class="field-error" id="rangeError" hidden></p>
           </div>
         </div>
 
-        <div class="block">
+        <div class="card">
           <h2>저장 형식</h2>
           <div class="choices" id="outputChoices">
             <label class="choice"><input type="radio" name="output" value="lossless" checked><span><strong>무손실 MP4</strong><em>H.264 lossless · 추가 손실 0 · 파일이 커요. QuickTime·아이폰에선 재생이 안 될 수 있어요(VLC·편집툴 OK).</em></span></label>
@@ -154,63 +157,61 @@
           </div>
         </div>
 
-        <div class="block block-action" id="actionBlock">
-          <button type="button" class="primary" id="startBtn" disabled>
+        <div class="card card-action" id="actionBlock">
+          <button type="button" class="btn btn-primary btn-large" id="startBtn" disabled>
             <span>보정하고 합치기</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.1365 12.6362C21.4879 12.2848 21.4879 11.7149 21.1365 11.3635L14.1365 4.36346C13.785 4.01199 13.2152 4.01199 12.8637 4.36346C12.5122 4.71493 12.5122 5.28478 12.8637 5.63625L18.3273 11.0999H3.50012C3.00307 11.0999 2.60013 11.5028 2.60013 11.9999C2.60013 12.4969 3.00307 12.8999 3.50012 12.8999H18.3273L12.8637 18.3635C12.5122 18.7149 12.5122 19.2848 12.8637 19.6363C13.2152 19.9877 13.785 19.9877 14.1365 19.6362L21.1365 12.6362Z" fill="currentColor"/></svg>
           </button>
           <p class="help" id="estimate"></p>
         </div>
 
-        <div class="block block-progress" id="progressBlock" hidden>
-          <div class="field-row"><strong id="stageText">준비 중</strong><span class="mono" id="pctText">0%</span></div>
+        <div class="card card-progress" id="progressBlock" hidden>
+          <div class="field-row"><strong id="stageText">준비 중</strong><span class="num" id="pctText">0%</span></div>
           <div class="bar"><span id="barFill"></span></div>
-          <dl class="meta meta-tight">
-            <div><dt>프레임</dt><dd class="mono" id="frameText">0 / 0</dd></div>
-            <div><dt>속도</dt><dd class="mono" id="fpsText">-</dd></div>
-            <div><dt>남은 시간</dt><dd class="mono" id="etaText">-</dd></div>
-            <div><dt>누적 크기</dt><dd class="mono" id="sizeText">-</dd></div>
+          <dl class="meta">
+            <div><dt>프레임</dt><dd class="num" id="frameText">0 / 0</dd></div>
+            <div><dt>속도</dt><dd class="num" id="fpsText">-</dd></div>
+            <div><dt>남은 시간</dt><dd class="num" id="etaText">-</dd></div>
+            <div><dt>누적 크기</dt><dd class="num" id="sizeText">-</dd></div>
           </dl>
-          <button type="button" class="ghost" id="cancelBtn">취소</button>
+          <button type="button" class="btn btn-outlined btn-medium" id="cancelBtn">취소</button>
         </div>
 
-        <div class="block block-result" id="resultBlock" hidden>
+        <div class="card card-result" id="resultBlock" hidden>
           <div class="result-head">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8 12.3 2.7 2.7L16.3 9.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.09995 11.9996C2.09995 6.53199 6.53231 2.09961 11.9999 2.09961C17.4675 2.09961 21.8999 6.53199 21.8999 11.9996C21.8999 17.4672 17.4675 21.8996 11.9999 21.8996C6.53231 21.8996 2.09995 17.4672 2.09995 11.9996ZM16.6466 9.87545C16.9923 9.51829 16.983 8.94852 16.6258 8.60283C16.2687 8.25713 15.6989 8.26642 15.3532 8.62357L10.6773 13.4545L8.64748 11.3517C8.30227 10.9941 7.73251 10.984 7.37489 11.3292C7.01727 11.6745 7.0072 12.2442 7.35241 12.6018L10.0289 15.3746C10.1983 15.5501 10.4318 15.6493 10.6758 15.6495C10.9198 15.6497 11.1534 15.5508 11.3231 15.3754L16.6466 9.87545Z" fill="currentColor"/></svg>
             <strong>완료했어요</strong>
           </div>
-          <dl class="meta meta-tight" id="resultMeta"></dl>
-          <p class="notice" id="resultNote" hidden></p>
-          <a class="primary" id="downloadLink" download>
+          <dl class="meta" id="resultMeta"></dl>
+          <div class="msg msg-info" id="resultNote" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.09998 11.9996C2.09998 6.53199 6.53234 2.09961 11.9999 2.09961C17.4675 2.09961 21.8999 6.53199 21.8999 11.9996C21.8999 17.4672 17.4675 21.8996 11.9999 21.8996C6.53234 21.8996 2.09998 17.4672 2.09998 11.9996ZM12.9999 7.99951C12.9999 8.5518 12.5522 8.99951 11.9999 8.99951C11.4476 8.99951 10.9999 8.5518 10.9999 7.99951C10.9999 7.44723 11.4476 6.99951 11.9999 6.99951C12.5522 6.99951 12.9999 7.44723 12.9999 7.99951ZM12 10.5995C12.4971 10.5995 12.9 11.0025 12.9 11.4995V15.9995C12.9 16.4966 12.4971 16.8995 12 16.8995C11.503 16.8995 11.1 16.4966 11.1 15.9995V11.4995C11.1 11.0025 11.503 10.5995 12 10.5995Z" fill="currentColor"/></svg><p></p></div>
+          <a class="btn btn-primary btn-large" id="downloadLink" download>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.59961C12.497 2.59961 12.9 3.00255 12.9 3.49961V12.8273L15.8636 9.8637C16.215 9.51223 16.7849 9.51223 17.1364 9.8637C17.4878 10.2152 17.4878 10.785 17.1364 11.1365L12.6364 15.6365C12.2849 15.988 11.715 15.988 11.3636 15.6365L6.86359 11.1365C6.51212 10.785 6.51212 10.2152 6.86359 9.8637C7.21506 9.51223 7.78491 9.51223 8.13638 9.8637L11.1 12.8273V3.49961C11.1 3.00255 11.5029 2.59961 12 2.59961Z" fill="currentColor"/><path d="M21.1502 14.8997C21.1502 14.4026 20.7472 13.9997 20.2502 13.9997C19.7531 13.9997 19.3502 14.4026 19.3502 14.8997V17.4498C19.3502 18.2644 19.3391 18.4582 19.2964 18.5897C19.1875 18.9246 18.925 19.1872 18.5901 19.296C18.4586 19.3387 18.2648 19.3498 17.4502 19.3498H6.55023C5.73567 19.3498 5.54184 19.3387 5.41032 19.296C5.07544 19.1872 4.81289 18.9246 4.70408 18.5897C4.66134 18.4582 4.65024 18.2644 4.65024 17.4498V14.8997C4.65024 14.4027 4.24729 13.9997 3.75023 13.9997C3.25317 13.9997 2.85022 14.4027 2.85022 14.8997V17.0852C2.85021 17.615 2.8502 18.0663 2.88046 18.4367C2.91226 18.8259 2.98189 19.2044 3.1663 19.5664C3.44434 20.112 3.88798 20.5557 4.43365 20.8337C4.79558 21.0181 5.17417 21.0878 5.56333 21.1196C5.93374 21.1498 6.3849 21.1498 6.91473 21.1498H17.0856C17.6154 21.1498 18.0667 21.1498 18.4371 21.1196C18.8262 21.0878 19.2048 21.0181 19.5667 20.8337C20.1124 20.5557 20.5561 20.112 20.8341 19.5664C21.0185 19.2044 21.0881 18.8259 21.1199 18.4367C21.1502 18.0663 21.1502 17.6151 21.1502 17.0853V14.8997Z" fill="currentColor"/></svg>
             <span>다운로드</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
-          <button type="button" class="ghost" id="againBtn">설정 바꿔서 다시</button>
+          <button type="button" class="btn btn-outlined btn-medium" id="againBtn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.60034 11.9977C2.60034 6.80618 6.80885 2.59766 12.0003 2.59766C13.8175 2.59766 15.5149 3.11387 16.953 4.0069L17.9024 3.0575C18.1598 2.8001 18.5469 2.7231 18.8832 2.86241C19.2195 3.00171 19.4388 3.32988 19.4388 3.6939V6.87588C19.4388 7.11457 19.3439 7.34349 19.1751 7.51227C19.0064 7.68106 18.7775 7.77588 18.5388 7.77588H15.3568C14.9928 7.77588 14.6646 7.5566 14.5253 7.22029C14.386 6.88399 14.463 6.49688 14.7204 6.23948L15.6373 5.32255C14.5571 4.73261 13.3181 4.39766 12.0003 4.39766C7.80296 4.39766 4.40033 7.80029 4.40033 11.9977C4.40034 12.5072 4.45035 13.0041 4.54545 13.4841C4.64206 13.9717 4.32512 14.4452 3.83755 14.5419C3.34997 14.6385 2.8764 14.3215 2.77979 13.8339C2.66197 13.2394 2.60034 12.6253 2.60034 11.9977Z" fill="currentColor"/><path d="M20.1632 9.45678C20.6508 9.3602 21.1244 9.67717 21.2209 10.1647C21.3387 10.7592 21.4003 11.3731 21.4003 12.0006C21.4003 17.192 17.1918 21.4006 12.0003 21.4006C10.1837 21.4006 8.48672 20.8847 7.04893 19.9921L6.0958 20.9452C5.8384 21.2026 5.45129 21.2796 5.11499 21.1403C4.77868 21.001 4.55941 20.6729 4.55941 20.3088L4.55941 17.1269C4.55941 16.8882 4.65423 16.6592 4.82301 16.4905C4.99179 16.3217 5.22071 16.2269 5.4594 16.2269H8.64137C9.00538 16.2269 9.33356 16.4461 9.47286 16.7824C9.61216 17.1187 9.53516 17.5059 9.27776 17.7633L8.36463 18.6764C9.44457 19.2659 10.683 19.6006 12.0003 19.6006C16.1977 19.6006 19.6003 16.1979 19.6003 12.0006C19.6003 11.4912 19.5503 10.9944 19.4553 10.5145C19.3587 10.0269 19.6756 9.55337 20.1632 9.45678Z" fill="currentColor"/></svg>
+            <span>설정 바꿔서 다시</span>
+          </button>
         </div>
 
-        <p class="error block-error" id="errorBox" hidden></p>
+        <div class="msg msg-negative" id="errorBox" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.09991 11.9996C2.09991 6.53199 6.53228 2.09961 11.9999 2.09961C17.4675 2.09961 21.8998 6.53199 21.8998 11.9996C21.8998 17.4672 17.4675 21.8996 11.9999 21.8996C6.53228 21.8996 2.09991 17.4672 2.09991 11.9996ZM12 7.09951C12.497 7.09951 12.9 7.50246 12.9 7.99951V12.4995C12.9 12.9966 12.497 13.3995 12 13.3995C11.5029 13.3995 11.1 12.9966 11.1 12.4995V7.99951C11.1 7.50246 11.5029 7.09951 12 7.09951ZM12.9998 15.9995C12.9998 16.5518 12.5521 16.9995 11.9998 16.9995C11.4476 16.9995 10.9999 16.5518 10.9999 15.9995C10.9999 15.4472 11.4476 14.9995 11.9998 14.9995C12.5521 14.9995 12.9998 15.4472 12.9998 15.9995Z" fill="currentColor"/></svg><p></p></div>
       </aside>
     </section>
 
     <section class="explain">
       <div class="explain-row">
-        <div class="explain-title"><span class="num">왜</span><h3>그물무늬는 노이즈가 아니에요</h3></div>
+        <div class="explain-title"><span class="eyebrow">왜</span><h3>그물무늬는 노이즈가 아니에요</h3></div>
         <p>AI는 작은 밑그림을 그린 뒤 "확대 기계"로 2배씩 여러 번 키워요. 이 기계가 빈 칸을 채울 때 한 칸은 진하게, 한 칸은 연하게 채우는 버릇이 있어서, 페인트 롤러 자국처럼 같은 크기·같은 방향의 무늬가 화면 전체에 깔립니다. 하늘이나 흰 옷에선 묻히지만, 어둡고 자잘한 숲 바닥에선 잘 보여요. 규칙이 있는 무늬라서 일반 노이즈 제거기는 "원래 그림"으로 보고 그냥 둡니다.</p>
       </div>
       <div class="explain-row">
-        <div class="explain-title"><span class="num">어떻게</span><h3>"어디를"이 아니라 "어떤 무늬를" 지워요</h3></div>
+        <div class="explain-title"><span class="eyebrow">어떻게</span><h3>"어디를"이 아니라 "어떤 무늬를" 지워요</h3></div>
         <p>합창단에서 한 사람이 계속 "삐—" 소리를 내면, 전체 볼륨을 줄이는 대신 그 음 하나만 빼면 되죠. 영상을 128×128 조각으로 나눠 주파수 지도로 바꾼 뒤, 45° 대각선·2~3픽셀 간격에 해당하는 네 모서리 영역만 줄이고 다시 합쳐요. 밝기(Y) 채널만 다루고 색(UV)과 오디오는 원본 그대로 두기 때문에, 대부분의 픽셀은 255단계 중 1~2단계만 바뀝니다.</p>
       </div>
       <div class="explain-row">
-        <div class="explain-title"><span class="num">보안</span><h3>영상은 이 탭 밖으로 나가지 않아요</h3></div>
+        <div class="explain-title"><span class="eyebrow">보안</span><h3>영상은 이 탭 밖으로 나가지 않아요</h3></div>
         <p>디코딩·보정·인코딩 모두 브라우저 안의 WebAssembly(ffmpeg)와 Web Worker에서 돌아가요. 페이지에는 외부 서버로의 전송을 막는 보안 정책(CSP: connect-src 'self')이 걸려 있고, 엔진 파일까지 모두 같은 도메인에서 받아요. 작업이 끝나면 탭을 닫는 순간 메모리에서 사라집니다.</p>
       </div>
     </section>
   </main>
-
-  <footer class="footer">
-    <span>그물지우개</span>
-    <span class="muted">ffmpeg.wasm (LGPL/GPL) · 모든 처리는 로컬에서</span>
-  </footer>
 </body>
 </html>
