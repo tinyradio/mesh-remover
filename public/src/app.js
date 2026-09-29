@@ -731,6 +731,18 @@ function resetAll() {
 $('resetSettings').addEventListener('click', resetSettings);
 $('resetAll').addEventListener('click', resetAll);
 
+// 안내 팝업 (네이티브 <dialog>: Esc로 닫기·포커스 가두기 기본 제공)
+const infoDialog = $('infoDialog');
+$('infoBtn').addEventListener('click', () => infoDialog.showModal());
+$('infoClose').addEventListener('click', () => infoDialog.close());
+infoDialog.addEventListener('click', (e) => {
+  // 바깥(dimmer) 클릭 시 닫기
+  const r = infoDialog.getBoundingClientRect();
+  const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  if (!inside) infoDialog.close();
+});
+infoDialog.addEventListener('close', () => $('infoBtn').focus());
+
 let toastTimer;
 function showToast(text) {
   const t = $('toast');
