@@ -164,7 +164,6 @@ button { font: inherit; color: inherit; }
   white-space: nowrap;
 }
 .chip .icon { font-size: 16px; }
-.chip-lock .icon { color: var(--primary-normal); }
 .chip-engine .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--status-cautionary); }
 .chip-engine[data-state="loading"] .dot { animation: blink 1.2s ease-in-out infinite; }
 .chip-engine[data-state="ready"] .dot { background: var(--status-positive); }
@@ -612,7 +611,6 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 @media (max-width: 767px) {
   main { padding: 0 16px; }
   .topbar-inner { padding: 0 16px; height: 56px; }
-  .chip-lock { display: none; }
   .intro { grid-template-columns: 1fr; gap: 32px; padding: 40px 0; }
   .intro h1 { font-size: 24px; line-height: 1.334; letter-spacing: -0.023em; }
   .drop-inner, .drop-busy { min-height: 280px; }
