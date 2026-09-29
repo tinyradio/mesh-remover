@@ -736,9 +736,10 @@ const infoDialog = $('infoDialog');
 $('infoBtn').addEventListener('click', () => {
   infoDialog.showModal();
   // 닫혀 있을 땐(display:none) 스크롤을 못 바꾸므로 연 직후에 맨 위로
-  infoDialog.querySelector('.modal-body').scrollTop = 0;
+  infoDialog.querySelector('.modal-scroll').scrollTop = 0;
 });
 $('infoClose').addEventListener('click', () => infoDialog.close());
+$('infoConfirm').addEventListener('click', () => infoDialog.close());
 infoDialog.addEventListener('click', (e) => {
   // 바깥(dimmer) 클릭 시 닫기
   const r = infoDialog.getBoundingClientRect();
