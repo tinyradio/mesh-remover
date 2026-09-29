@@ -2,7 +2,6 @@ import { Engine, OUTPUTS } from './engine.js';
 import { analyzeSpectrum, buildMask, TILE } from './mesh-filter.js';
 
 const $ = (id) => document.getElementById(id);
-const FADE_SEC = 0.2;
 const CHUNK_BYTES = 96 * 1024 * 1024;
 
 // ---------------------------------------------------------------------------
@@ -83,7 +82,6 @@ const state = {
   detected: [],        // 분석에서 찾은 튀는 점들 {fx, fy, strength, on}
   spectrum: null,      // analyzeSpectrum 결과
   mask: null,
-  ranges: null,        // null = 전체
   preview: { index: 0, raw: null, fixed: null },
   view: { zoom: 'fit', mode: 'split', split: 0.5, cx: 0, cy: 0 },
   running: false,
@@ -147,38 +145,9 @@ function showError(err) {
 }
 function clearError() { $('errorBox').hidden = true; }
 
-/** 해당 프레임에 적용할 강도(0~1). 구간 밖은 0, 경계는 FADE_SEC에 걸쳐 부드럽게 */
-function gainAt(index) {
-  const s = state.settings.strength;
-  if (!state.ranges) return s;
-  const t = index / state.info.fps.value;
-  let g = 0;
-  for (const [a, b] of state.ranges) {
-    if (t >= a && t <= b) return s;
-    const d = t < a ? a - t : t - b;
-    if (d < FADE_SEC) g = Math.max(g, 1 - d / FADE_SEC);
-  }
-  return g * s;
-}
-
-function parseRanges(text) {
-  const parts = text.split(/[,\n]+/).map((p) => p.trim()).filter(Boolean);
-  if (!parts.length) throw new Error('구간을 입력해 주세요. 예: 0-2, 6-9');
-  const dur = state.info.duration || Infinity;
-  const toSec = (s) => {
-    s = s.trim();
-    const m = s.match(/^(\d+):(\d+(?:\.\d+)?)$/);
-    const v = m ? Number(m[1]) * 60 + Number(m[2]) : Number(s);
-    if (!isFinite(v) || v < 0) throw new Error(`"${s}"은(는) 올바른 시간이 아니에요.`);
-    return v;
-  };
-  return parts.map((p) => {
-    const [a, b] = p.split(/\s*[-~]\s*/);
-    if (b === undefined) throw new Error(`"${p}" → 시작-끝 형태로 적어 주세요.`);
-    const s = toSec(a), e = Math.min(toSec(b), dur);
-    if (e <= s) throw new Error(`"${p}" → 끝이 시작보다 뒤여야 해요.`);
-    return [s, e];
-  }).sort((x, y) => x[0] - y[0]);
+/** 프레임에 적용할 강도(0~1). 항상 영상 전체를 같은 강도로 보정 */
+function gainAt() {
+  return state.settings.strength;
 }
 
 // ---------------------------------------------------------------------------
@@ -363,11 +332,7 @@ async function analyze() {
   const badge = $('scoreBadge');
   badge.textContent = '분석 중';
   delete badge.dataset.level;
-  let lo = 0, hi = i.frames - 1;
-  if (state.ranges) {
-    lo = Math.min(hi, Math.floor(state.ranges[0][0] * i.fps.value));
-    hi = Math.min(hi, Math.floor(state.ranges[state.ranges.length - 1][1] * i.fps.value));
-  }
+  const lo = 0, hi = i.frames - 1;
   // 키프레임 바로 다음 프레임은 디코드가 싸다 → 가능하면 그 중에서 고르게 8장
   const cheap = engine.cheapStarts().filter((f) => f >= lo && f <= hi);
   const pickEven = (arr, n) => (arr.length <= n ? arr : Array.from({ length: n }, (_, k) => arr[Math.floor(((k + 0.5) * arr.length) / n)]));
@@ -501,7 +466,7 @@ async function refilterPreview(token = previewToken) {
     $('labelRight').textContent = `보정 · 평균 ${(r.stats.meanAbs / (1 << (i.bits - 8))).toFixed(2)}단계 변화`;
   } else {
     fixed = orig;
-    $('labelRight').textContent = '보정 안 함 (처리 구간 밖)';
+    $('labelRight').textContent = '보정 안 함 (강도 0%)';
   }
   state.preview.fixed = fixed;
   putCanvas(canvases.fixed, toImageData(raw, fixed));
@@ -662,37 +627,6 @@ document.querySelectorAll('[data-diag]').forEach((b) => b.addEventListener('clic
   if (state.info) applySettings();
 }));
 
-document.querySelectorAll('[data-range]').forEach((b) => b.addEventListener('click', () => {
-  if (state.running) return;
-  document.querySelectorAll('[data-range]').forEach((x) => x.classList.toggle('on', x === b));
-  const custom = b.dataset.range === 'custom';
-  $('rangeField').hidden = !custom;
-  if (!custom) { state.ranges = null; $('rangeError').hidden = true; $('ranges').removeAttribute('aria-invalid'); refreshAfterRanges(); }
-  else { $('ranges').focus(); readRanges(); }
-}));
-$('ranges').addEventListener('input', debounce(() => readRanges(), 350));
-
-function readRanges() {
-  const input = $('ranges');
-  if (!state.info) return;
-  if (!input.value.trim()) { state.ranges = null; $('rangeError').hidden = true; input.removeAttribute('aria-invalid'); refreshAfterRanges(); return; }
-  try {
-    state.ranges = parseRanges(input.value);
-    $('rangeError').hidden = true;
-    input.removeAttribute('aria-invalid');
-  } catch (err) {
-    state.ranges = null;
-    $('rangeError').hidden = false;
-    $('rangeError').textContent = err.message;
-    input.setAttribute('aria-invalid', 'true');
-  }
-  refreshAfterRanges();
-}
-function refreshAfterRanges() {
-  updateEstimate();
-  if (state.info && !state.running) refilterPreview();
-}
-
 document.querySelectorAll('input[name="output"]').forEach((r) => r.addEventListener('change', updateEstimate));
 function selectedOutput() { return document.querySelector('input[name="output"]:checked').value; }
 
@@ -703,10 +637,7 @@ function updateEstimate() {
   const mode = selectedOutput();
   const ratio = mode === 'ffv1' ? 0.5 : 0;
   const est = ratio ? raw * ratio : (i.width * i.height * i.fps.value * 0.45 * i.duration) / 8;
-  const filtered = state.ranges
-    ? state.ranges.reduce((a, [s, e]) => a + (e - s), 0)
-    : i.duration;
-  let text = `예상 결과 크기 약 ${fmtBytes(est)} · 보정할 분량 ${filtered.toFixed(1)}초`;
+  let text = `예상 결과 크기 약 ${fmtBytes(est)} · 영상 길이 ${i.duration.toFixed(1)}초`;
   if (est > 1.6 * 1024 ** 3) text += ' — 브라우저 메모리 한도에 가까워요. 초고화질 MP4를 권장해요.';
   $('estimate').textContent = text;
 }
@@ -816,8 +747,6 @@ function resetSettings() {
     el.dispatchEvent(new Event('input'));
   }
   document.querySelector(`[data-diag="${DEFAULTS.diagonals}"]`).click();
-  $('ranges').value = '';
-  document.querySelector('[data-range="all"]').click();
   document.querySelector('input[name="output"][value="ffv1"]').checked = true;
   updateEstimate();
 }
@@ -902,7 +831,6 @@ async function filterChunk(raw, start, count, stats) {
 
 async function run() {
   if (state.running || !state.info) return;
-  if (!$('rangeField').hidden && !state.ranges) { readRanges(); if (!state.ranges) return; }
   clearError();
   resetResult();
   const i = state.info;
