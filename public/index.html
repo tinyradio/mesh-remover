@@ -21,8 +21,11 @@
         <span>그물지우개</span>
       </a>
       <div class="topbar-right">
-        <span class="chip chip-engine" id="engineStatus" data-state="loading">
-          <span class="dot"></span><span class="label">엔진 준비 중</span>
+        <span class="tooltip-anchor">
+          <span class="chip chip-engine" id="engineStatus" data-state="loading" tabindex="0" aria-describedby="engineTip">
+            <span class="dot"></span><span class="label">엔진 준비 중</span>
+          </span>
+          <span class="tooltip" id="engineTip" role="tooltip">영상 처리 프로그램(ffmpeg, 약 31MB)을 받는 중이에요. 영상을 먼저 넣어도 준비되면 자동으로 이어서 진행해요.</span>
         </span>
         <button type="button" class="icon-btn" id="infoBtn" aria-label="서비스 안내 보기" aria-haspopup="dialog" title="안내"><svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12.9999 7.99951C12.9999 8.5518 12.5522 8.99951 11.9999 8.99951C11.4476 8.99951 10.9999 8.5518 10.9999 7.99951C10.9999 7.44723 11.4476 6.99951 11.9999 6.99951C12.5522 6.99951 12.9999 7.44723 12.9999 7.99951Z" fill="currentColor"/><path d="M12.9 11.4995C12.9 11.0025 12.497 10.5995 12 10.5995C11.5029 10.5995 11.1 11.0025 11.1 11.4995V15.9995C11.1 16.4966 11.5029 16.8995 12 16.8995C12.497 16.8995 12.9 16.4966 12.9 15.9995V11.4995Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.09995 11.9996C2.09995 6.53199 6.5323 2.09961 11.9999 2.09961C17.4675 2.09961 21.8999 6.53199 21.8999 11.9996C21.8999 17.4672 17.4675 21.8996 11.9999 21.8996C6.5323 21.8996 2.09995 17.4672 2.09995 11.9996ZM11.9999 3.89961C7.52641 3.89961 3.89994 7.5261 3.89994 11.9996C3.89994 16.4731 7.52641 20.0996 11.9999 20.0996C16.4734 20.0996 20.0999 16.4731 20.0999 11.9996C20.0999 7.5261 16.4734 3.89961 11.9999 3.89961Z" fill="currentColor"/></svg></button>
       </div>

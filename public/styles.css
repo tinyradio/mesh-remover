@@ -662,6 +662,32 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
   background: linear-gradient(to top, var(--bg-elevated) calc(100% - 20px), transparent);
 }
 
+/* WDS Tooltip (medium, inverse) */
+.tooltip-anchor { position: relative; display: inline-flex; }
+.chip-engine { cursor: help; }
+.chip-engine:focus-visible { outline: 2px solid var(--primary-normal); outline-offset: 2px; }
+.tooltip {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 40;
+  width: max-content; max-width: 280px;
+  padding: 8px 12px; border-radius: 8px;
+  background: color-mix(in srgb, var(--inverse-background) 88%, transparent);
+  backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+  color: var(--inverse-label);
+  /* label1 medium */
+  font-size: 14px; line-height: 1.429; letter-spacing: 0.0145em; font-weight: 500;
+  white-space: normal; word-break: keep-all; overflow-wrap: anywhere;
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, visibility 0.2s;
+  pointer-events: none;
+}
+.tooltip::before {
+  content: ""; position: absolute; bottom: 100%; right: 16px;
+  border: 6px solid transparent; border-bottom-color: color-mix(in srgb, var(--inverse-background) 88%, transparent);
+}
+.tooltip-anchor:hover .tooltip, .chip-engine:focus + .tooltip {
+  opacity: 1; visibility: visible; transform: none;
+}
+
 /* ============================================================
    Responsive (WDS breakpoints: md 992 / sm 768)
    ============================================================ */

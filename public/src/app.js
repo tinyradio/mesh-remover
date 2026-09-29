@@ -95,15 +95,18 @@ const canvases = { orig: document.createElement('canvas'), fixed: document.creat
 let engineReady = (async () => {
   const pill = $('engineStatus');
   const label = pill.querySelector('.label');
+  const tip = $('engineTip');
   try {
     await engine.load((loaded, total) => {
       label.textContent = total ? `엔진 받는 중 ${Math.round((loaded / total) * 100)}%` : `엔진 받는 중 ${fmtBytes(loaded)}`;
     });
     pill.dataset.state = 'ready';
     label.textContent = '엔진 준비됨';
+    tip.textContent = '브라우저 안에서 영상을 처리하는 프로그램(ffmpeg)을 다 받았어요. 영상은 서버로 보내지 않고, 이제 인터넷을 끊어도 보정이 끝까지 돼요.';
   } catch (err) {
     pill.dataset.state = 'error';
     label.textContent = '엔진 로딩 실패';
+    tip.textContent = '영상 처리 프로그램을 받지 못했어요. 네트워크를 확인하고 새로고침해 주세요.';
     throw err;
   }
 })();
