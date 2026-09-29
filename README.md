@@ -1,5 +1,7 @@
 # 그물지우개
 
+**배포 주소: https://mesh-remover.vercel.app**
+
 AI가 만든 영상(업스케일 과정)에 생기는 **그물무늬(대각선 격자 무늬)만 골라서 지우고**, 다시 압축할 때 생기는 손실 없이 저장하는 웹 도구입니다.
 영상은 **브라우저 밖으로 나가지 않습니다.** 디코딩, 보정, 인코딩이 모두 이 탭 안의 WebAssembly(ffmpeg.wasm)와 Web Worker에서 이루어집니다.
 
@@ -39,6 +41,8 @@ npm run dev   # http://localhost:5173
 `npm run build`는 `node_modules`의 ffmpeg.wasm 파일을 `public/vendor/`로 복사합니다. 이 폴더는 git에 올리지 않습니다.
 
 ## Vercel 배포
+
+현재 배포: https://mesh-remover.vercel.app
 
 `vercel.json`에 빌드 명령(`npm run build`), 출력 폴더(`public`), 보안 헤더(COOP/COEP/CSP)가 들어 있어서 저장소를 연결하면 그대로 배포됩니다.
 
