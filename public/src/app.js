@@ -88,6 +88,9 @@ const state = {
   view: { zoom: 'fit', mode: 'split', split: 0.5, cx: 0, cy: 0 },
   running: false,
   resultURL: null,
+  resultPlayURL: null,
+  stageMode: 'compare', // compare | play(원본 재생) | result(결과 재생)
+  canPlayOriginal: false,
 };
 if (new URLSearchParams(location.search).has('debug')) window.__mesh = { engine, pool, state };
 const canvases = { orig: document.createElement('canvas'), fixed: document.createElement('canvas'), diff: document.createElement('canvas') };
@@ -292,6 +295,7 @@ async function openFile(file) {
     await engineReady;
     $('dropBusyText').textContent = '영상 정보를 읽는 중';
     const info = await engine.open(file);
+    setupOriginalPlayer(file);
     state.info = info;
     state.detected = []; state.spectrum = null;
     resetResult();
@@ -451,6 +455,8 @@ $('scrub').addEventListener('input', (e) => {
   setFill(e.target);
   const f = Number(e.target.value);
   $('scrubTime').textContent = fmtTime(f / state.info.fps.value, true);
+  if (state.stageMode === 'play') { player.currentTime = f / state.info.fps.value; return; }
+  if (state.stageMode === 'result') setStageMode('compare');
   if (!state.running) loadPreviewDebounced(f);
 });
 
@@ -521,6 +527,13 @@ function clampCenter() {
 
 function render() {
   if (!state.info) return;
+  if (state.stageMode !== 'compare') {
+    $('splitLine').hidden = true;
+    $('labelRight').hidden = true;
+    $('labelLeft').hidden = false;
+    $('labelLeft').textContent = state.stageMode === 'play' ? '원본 재생 중' : '보정 결과 재생 중';
+    return;
+  }
   const dpr = window.devicePixelRatio || 1;
   const r = stage.getBoundingClientRect();
   const W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
@@ -699,6 +712,97 @@ function updateEstimate() {
 }
 
 // ---------------------------------------------------------------------------
+// 재생: 원본 재생(툴바 버튼) · 결과 재생(결과 섹션). 멈추면 그 장면에서 비교 화면으로
+// ---------------------------------------------------------------------------
+const player = $('player');
+let originalURL = null;
+
+function setupOriginalPlayer(file) {
+  setStageMode('compare');
+  if (originalURL) URL.revokeObjectURL(originalURL);
+  originalURL = URL.createObjectURL(file); // 이 탭 안의 blob URL (전송 없음)
+  state.canPlayOriginal = false;
+  const btn = $('playBtn');
+  btn.disabled = true;
+  btn.title = '원본 영상 재생';
+  // 브라우저가 이 형식을 재생할 수 있는지 먼저 확인
+  const probe = document.createElement('video');
+  probe.muted = true;
+  probe.preload = 'metadata';
+  probe.onloadedmetadata = () => {
+    state.canPlayOriginal = true;
+    btn.disabled = state.running;
+    probe.removeAttribute('src');
+    probe.load();
+  };
+  probe.onerror = () => {
+    btn.title = '이 형식은 브라우저에서 바로 재생할 수 없어요 (보정은 가능해요)';
+  };
+  probe.src = originalURL;
+}
+
+function setStageMode(mode) {
+  state.stageMode = mode;
+  const playing = mode !== 'compare';
+  if (!playing) player.pause();
+  player.hidden = !playing;
+  player.controls = mode === 'result';
+  view.style.visibility = playing ? 'hidden' : '';
+  $('playerClose').hidden = mode !== 'result';
+  const btn = $('playBtn');
+  btn.classList.toggle('is-playing', mode === 'play');
+  btn.querySelector('span').textContent = mode === 'play' ? '일시정지' : '재생';
+  for (const b of document.querySelectorAll('[data-zoom], [data-view]')) b.disabled = playing;
+  render();
+}
+
+const waitMeta = () => (player.readyState >= 1 ? Promise.resolve() : new Promise((r) => player.addEventListener('loadedmetadata', r, { once: true })));
+
+async function playOriginal() {
+  if (!originalURL || !state.info) return;
+  if (player.src !== originalURL) player.src = originalURL;
+  setStageMode('play');
+  await waitMeta();
+  player.currentTime = state.preview.index / state.info.fps.value;
+  try {
+    await player.play();
+  } catch {
+    setStageMode('compare');
+    showToast('이 영상은 브라우저에서 재생할 수 없어요');
+  }
+}
+
+function pauseOriginal() {
+  const i = state.info;
+  player.pause();
+  const idx = Math.max(0, Math.min(i.frames - 1, Math.round(player.currentTime * i.fps.value)));
+  setStageMode('compare');
+  loadPreview(idx);
+}
+
+$('playBtn').addEventListener('click', () => (state.stageMode === 'play' ? pauseOriginal() : playOriginal()));
+player.addEventListener('ended', () => { if (state.stageMode === 'play') pauseOriginal(); });
+player.addEventListener('timeupdate', () => {
+  if (state.stageMode !== 'play' || !state.info) return;
+  const f = Math.round(player.currentTime * state.info.fps.value);
+  const sc = $('scrub');
+  sc.value = String(f);
+  setFill(sc);
+  $('scrubTime').textContent = fmtTime(player.currentTime, true);
+});
+
+$('playResultBtn').addEventListener('click', async () => {
+  if (!state.resultPlayURL) return;
+  player.src = state.resultPlayURL;
+  setStageMode('result');
+  await waitMeta();
+  player.currentTime = 0;
+  player.play().catch(() => {});
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+$('playerClose').addEventListener('click', () => setStageMode('compare'));
+
+// ---------------------------------------------------------------------------
 // 초기화
 // ---------------------------------------------------------------------------
 const DEFAULTS = { strength: 100, period: 3.2, angle: 22, diagonals: 'both' };
@@ -721,6 +825,12 @@ function resetSettings() {
 /** 첨부한 영상을 비우고 처음 화면으로 */
 function resetAll() {
   if (state.running) return;
+  setStageMode('compare');
+  player.removeAttribute('src');
+  player.load();
+  if (originalURL) { URL.revokeObjectURL(originalURL); originalURL = null; }
+  state.canPlayOriginal = false;
+  $('playBtn').disabled = true;
   previewToken++;
   state.info = null; // 먼저 비워야 설정 변경 이벤트가 미리보기를 다시 그리지 않는다
   resetSettings();
@@ -802,8 +912,12 @@ async function run() {
   const myAbort = abort;
   document.body.classList.add('is-running');
   setActionMode('running');
+  setStageMode('compare');
   setControlsDisabled(true);
+  $('playBtn').disabled = true;
   const N = Math.max(4, Math.min(240, Math.floor(CHUNK_BYTES / i.frameBytes)));
+  // 결과가 브라우저에서 재생되지 않는 형식(무손실 MKV)이면 재생용 미리보기를 함께 만든다
+  const withPreview = mode !== 'hq';
   const stats = { filtered: 0, meanAbs: 0 };
   const segments = [];
   let bytes = 0;
@@ -846,9 +960,9 @@ async function run() {
       if (!d.frames) { slots[j] = { frames: 0, full: false }; return; }
       await filterChunk(d.data, c.start, d.frames, stats);
       check();
-      const blob = await engine.encode(d.data, d.frames, mode);
+      const { blob, preview } = await engine.encode(d.data, d.frames, mode, withPreview);
       check();
-      slots[j] = { blob, frames: d.frames, full: d.frames === c.count };
+      slots[j] = { blob, preview, frames: d.frames, full: d.frames === c.count };
       done += d.frames;
       bytes += blob.size;
       progress(done, '그물무늬 지우고 다시 압축하는 중');
@@ -872,9 +986,9 @@ async function run() {
       check();
       if (!d.frames) break;
       await filterChunk(d.data, start, d.frames, stats);
-      const blob = await engine.encode(d.data, d.frames, mode);
+      const { blob, preview } = await engine.encode(d.data, d.frames, mode, withPreview);
       check();
-      tail = { blob, frames: d.frames, full: d.frames === N };
+      tail = { blob, preview, frames: d.frames, full: d.frames === N };
       segments.push(tail);
       start += d.frames; done = start; bytes += blob.size;
       progress(done, '그물무늬 지우고 다시 압축하는 중');
@@ -885,6 +999,12 @@ async function run() {
     $('barFill').style.width = '97%';
     const out = await engine.mux(segments, mode, (s) => { $('stageText').textContent = s; });
     check();
+    if (withPreview) {
+      progress(frames, '재생용 미리보기 만드는 중');
+      const pv = await engine.mux(segments.map((sg) => ({ blob: sg.preview, frames: sg.frames })), 'preview');
+      check();
+      out.previewBlob = pv.blob;
+    }
     showResult(out, { frames, stats, mode, seconds: (performance.now() - t0) / 1000 });
   } catch (err) {
     if (err.name !== 'AbortError' && !myAbort.aborted) {
@@ -901,6 +1021,7 @@ async function run() {
     document.body.classList.remove('is-running');
     if ($('actionArea').dataset.mode === 'running') setActionMode('idle');
     setControlsDisabled(false);
+    $('playBtn').disabled = !state.canPlayOriginal;
   }
 }
 
@@ -925,6 +1046,9 @@ function setControlsDisabled(dis) {
 }
 
 function resetResult() {
+  if (state.stageMode === 'result') setStageMode('compare');
+  if (state.resultPlayURL && state.resultPlayURL !== state.resultURL) URL.revokeObjectURL(state.resultPlayURL);
+  state.resultPlayURL = null;
   if (state.resultURL) URL.revokeObjectURL(state.resultURL);
   state.resultURL = null;
   $('resultBlock').hidden = true;
@@ -943,10 +1067,12 @@ function setActionMode(mode) {
   fitPanel();
 }
 
-function showResult({ blob, audioNote }, { frames, stats, mode, seconds }) {
+function showResult({ blob, audioNote, previewBlob }, { frames, stats, mode, seconds }) {
   const i = state.info;
   const out = OUTPUTS[mode];
   state.resultURL = URL.createObjectURL(blob);
+  // 브라우저가 재생할 수 있는 파일: 초고화질 MP4는 결과 그대로, 무손실 MKV는 540p 미리보기
+  state.resultPlayURL = previewBlob ? URL.createObjectURL(previewBlob) : state.resultURL;
   const a = $('downloadLink');
   a.href = state.resultURL;
   a.download = `${i.name.replace(/\.[^.]+$/, '')}_그물제거.${out.ext}`;
@@ -963,6 +1089,7 @@ function showResult({ blob, audioNote }, { frames, stats, mode, seconds }) {
   const notes = [];
   if (frames !== i.frames && Math.abs(frames - i.frames) > 1) notes.push(`원본 정보상 ${i.frames}장이지만 실제로 ${frames}장을 읽었어요.`);
   if (audioNote) notes.push(audioNote);
+  if (previewBlob) notes.push(`재생은 ${engine.previewSize().h}p 미리보기예요. 저장되는 파일은 원본 해상도 무손실이에요.`);
   $('resultNote').hidden = !notes.length;
   $('resultNote').querySelector('p').textContent = notes.join(' ');
   $('resultBlock').hidden = false;

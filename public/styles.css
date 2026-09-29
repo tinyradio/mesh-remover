@@ -564,7 +564,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
    첨부 파일 카드 · 첨부 확인 · 토스트
    ============================================================ */
 .file-card { margin-top: 12px; gap: 16px; }
-.file-head { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.file-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
 .file-icon {
   width: 48px; height: 48px; border-radius: 12px;
   display: grid; place-items: center;
@@ -580,7 +580,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 }
 .file-label .icon { font-size: 16px; }
 .attached .file-label { font-size: 14px; line-height: 20px; letter-spacing: 0.0145em; }
-.file-card .file-name { margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: normal; }
+.file-card .file-name { margin-top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: normal; }
 .file-actions { display: flex; gap: 8px; }
 .file-score {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -627,7 +627,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
 
 @media (max-width: 767px) {
-  .file-head { grid-template-columns: 48px minmax(0, 1fr); }
+  .file-head { grid-template-columns: minmax(0, 1fr); }
   .file-actions { grid-column: 1 / -1; }
   .file-actions .btn { flex: 1; }
   .meta-wide { grid-template-columns: 1fr 1fr; }
@@ -761,6 +761,43 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 .tooltip-anchor:hover .tooltip, .chip-engine:focus + .tooltip {
   opacity: 1; visibility: visible; transform: none;
 }
+
+/* ============================================================
+   재생: 원본 재생(툴바) · 결과 재생(결과 섹션)
+   ============================================================ */
+#player {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; background: var(--media-bg);
+}
+.stage-close {
+  position: absolute; top: 12px; right: 12px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 32px; padding: 0 12px 0 8px; border: 0; border-radius: 8px; cursor: pointer;
+  background: var(--material-dimmer); color: var(--static-white);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  /* label2 semibold */
+  font-size: 13px; line-height: 1.385; letter-spacing: 0.0194em; font-weight: 600;
+}
+.stage-close .icon { font-size: 16px; }
+.stage-close:hover { background: color-mix(in srgb, var(--material-dimmer) 100%, #000 20%); }
+.play-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  /* '일시정지' 상태 폭으로 고정 → 재생/일시정지 전환 시 너비가 바뀌지 않음 */
+  width: 92px; height: 36px; padding: 0 14px 0 10px; flex: none;
+  border: 0; border-radius: 10px; cursor: pointer;
+  background: var(--primary-normal); color: var(--static-white);
+  /* label2 bold */
+  font-size: 13px; line-height: 1.385; letter-spacing: 0.0194em; font-weight: 700;
+  transition: background 0.15s var(--ease);
+}
+.play-btn .icon { font-size: 18px; }
+.play-btn .icon-pause { display: none; }
+.play-btn.is-playing .icon-play { display: none; }
+.play-btn.is-playing .icon-pause { display: inline; }
+.play-btn:hover:not(:disabled) { background: var(--primary-strong); }
+.play-btn:disabled { background: var(--interaction-disable); color: var(--label-assistive); cursor: not-allowed; }
+.play-btn:focus-visible { outline: 2px solid var(--primary-normal); outline-offset: 2px; }
+#playResultBtn .icon { font-size: 18px; }
 
 /* ============================================================
    Responsive (WDS breakpoints: md 992 / sm 768)

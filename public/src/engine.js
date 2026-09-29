@@ -29,6 +29,8 @@ const KNOWN_COLOR = {
 export const OUTPUTS = {
   ffv1: { label: '무손실 MKV (FFV1)', ext: 'mkv', seg: 'nut', maxBits: 16 },
   hq: { label: '초고화질 MP4 (CRF 12)', ext: 'mp4', seg: 'nut', maxBits: 16 },
+  // 브라우저 재생용 미리보기 (무손실 MKV는 브라우저가 재생하지 못함)
+  preview: { label: '재생용 미리보기', ext: 'mp4', seg: 'nut', maxBits: 16 },
 };
 
 const parseRate = (s) => {
@@ -368,24 +370,46 @@ export class Engine {
     return ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '12', '-bf', '0', '-profile:v', 'high', '-pix_fmt', 'yuv420p'];
   }
 
-  /** raw 프레임 묶음 → 세그먼트 인코드(한가한 인코더 레인에서). 반환: 세그먼트 Blob */
-  encode(raw, frames, mode) {
+  /** 재생용 미리보기 크기: 세로 540px 이하, 짝수 */
+  previewSize() {
+    const { width, height } = this.info;
+    const h = Math.min(540, height - (height % 2));
+    const w = Math.max(2, Math.round((width * h) / height / 2) * 2);
+    return { w, h };
+  }
+
+  /**
+   * raw 프레임 묶음 → 세그먼트 인코드(한가한 인코더 레인에서).
+   * withPreview면 같은 입력으로 540p 재생용 세그먼트도 한 번에 만든다(프레임을 다시 읽거나 복사하지 않음).
+   * 반환: { blob, preview }
+   */
+  encode(raw, frames, mode, withPreview = false) {
     return this.#pick(this.encLanes).run(async (l) => {
       const { width, height, pixFmt, fps } = this.info;
-      const inRaw = '/work/enc.raw', seg = '/work/seg.nut';
+      const inRaw = '/work/enc.raw', seg = '/work/seg.nut', prev = '/work/prev.nut';
+      const pv = this.previewSize();
       await l.ff.writeFile(inRaw, raw);
       try {
         await l.exec([
           '-f', 'rawvideo', '-pix_fmt', pixFmt, '-s', `${width}x${height}`, '-framerate', fps.str,
-          '-i', inRaw, '-frames:v', String(frames),
-          ...this.#colorArgs(), ...this.#codecArgs(mode), '-y', seg,
+          '-i', inRaw,
+          '-map', '0:v', '-frames:v', String(frames), ...this.#colorArgs(), ...this.#codecArgs(mode), '-y', seg,
+          ...(withPreview ? [
+            '-map', '0:v', '-frames:v', String(frames), '-vf', `scale=${pv.w}:${pv.h}:flags=bilinear`,
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26', '-bf', '0', '-pix_fmt', 'yuv420p', '-y', prev,
+          ] : []),
         ]);
       } finally {
         await l.ff.deleteFile(inRaw).catch(() => {});
       }
       const data = await l.ff.readFile(seg);
       await l.ff.deleteFile(seg);
-      return new Blob([data]);
+      let preview = null;
+      if (withPreview) {
+        preview = new Blob([await l.ff.readFile(prev)]);
+        await l.ff.deleteFile(prev);
+      }
+      return { blob: new Blob([data]), preview };
     });
   }
 
