@@ -609,6 +609,8 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 }
 .attached-text { min-width: 0; }
 .drop-busy > p { color: var(--label-alternative); font-size: 14px; }
+/* 진행 막대 폭 = 위 '파일을 첨부했어요' 카드 폭 */
+.drop-busy .progress-indeterminate { width: min(360px, 100%); }
 
 /* Toast (inverse) */
 .toast {
