@@ -571,17 +571,21 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 /* ============================================================
    Icon button · 안내 모달
    ============================================================ */
-.icon-btn {
-  width: 32px; height: 32px; padding: 0;
-  display: inline-grid; place-items: center;
+.topbar-right { align-items: center; }
+/* TextButton (assistive, leading icon) */
+.info-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 32px; padding: 0 8px;
   border: 0; border-radius: 8px; background: transparent; cursor: pointer;
-  color: var(--label-alternative);
+  color: var(--label-neutral);
+  /* label2 medium */
+  font-size: 13px; line-height: 1.385; letter-spacing: 0.0194em; font-weight: 500;
+  white-space: nowrap;
   transition: background 0.15s var(--ease), color 0.15s var(--ease);
 }
-.icon-btn .icon { font-size: 22px; }
-.icon-btn:hover { background: var(--fill-normal); color: var(--label-normal); }
-.icon-btn:focus-visible { outline: 2px solid var(--primary-normal); outline-offset: 2px; }
-.topbar-right { align-items: center; }
+.info-btn .icon { font-size: 18px; color: var(--label-alternative); }
+.info-btn:hover { background: var(--fill-normal); color: var(--label-normal); }
+.info-btn:focus-visible { outline: 2px solid var(--primary-normal); outline-offset: 2px; }
 
 /* WDS Popup (ModalContainer variant="popup" size="large") */
 .modal {
