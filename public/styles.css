@@ -799,6 +799,24 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 .play-btn:focus-visible { outline: 2px solid var(--primary-normal); outline-offset: 2px; }
 #playResultBtn .icon { font-size: 18px; }
 
+/* 음량 조절: 재생 버튼 옆 (원본·결과 재생 공통) */
+.volume {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 36px; padding: 0 12px 0 6px; border-radius: 10px;
+  background: var(--fill-normal);
+}
+.vol-btn {
+  width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
+  display: grid; place-items: center; background: transparent; color: var(--label-normal);
+}
+.vol-btn:hover { background: var(--fill-normal); }
+.vol-btn:focus-visible { outline: 2px solid var(--primary-normal); outline-offset: 2px; }
+.vol-btn .icon { font-size: 20px; }
+.vol-btn .icon-vol-off { display: none; }
+.volume.is-muted .icon-vol-on { display: none; }
+.volume.is-muted .icon-vol-off { display: inline; color: var(--label-alternative); }
+.volume input[type="range"] { width: 80px; height: 20px; }
+
 /* ============================================================
    Responsive (WDS breakpoints: md 992 / sm 768)
    ============================================================ */

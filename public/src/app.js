@@ -722,6 +722,40 @@ player.addEventListener('timeupdate', () => {
   $('scrubTime').textContent = fmtTime(player.currentTime, true);
 });
 
+// 음량 (원본·결과 재생 공통, 이 브라우저에만 기억)
+const volInput = $('volume');
+const volCtl = $('volumeCtl');
+try {
+  const saved = JSON.parse(localStorage.getItem('mesh.volume') || 'null');
+  if (saved) { volInput.value = String(saved.v); player.muted = !!saved.m; }
+} catch {}
+function applyVolume() {
+  const v = Number(volInput.value);
+  player.volume = v / 100;
+  setFill(volInput);
+  const muted = player.muted || v === 0;
+  volCtl.classList.toggle('is-muted', muted);
+  $('muteBtn').setAttribute('aria-label', muted ? '소리 켜기' : '음소거');
+  $('muteBtn').title = muted ? '소리 켜기' : '음소거';
+  try { localStorage.setItem('mesh.volume', JSON.stringify({ v, m: player.muted })); } catch {}
+}
+volInput.addEventListener('input', () => { player.muted = Number(volInput.value) === 0; applyVolume(); });
+$('muteBtn').addEventListener('click', () => {
+  if (player.muted || Number(volInput.value) === 0) {
+    player.muted = false;
+    if (Number(volInput.value) === 0) volInput.value = '50';
+  } else player.muted = true;
+  applyVolume();
+});
+// 결과 재생의 기본 컨트롤로 바꾼 음량도 슬라이더에 반영
+player.addEventListener('volumechange', () => {
+  const v = Math.round(player.volume * 100);
+  if (Number(volInput.value) !== v) volInput.value = String(v);
+  setFill(volInput);
+  volCtl.classList.toggle('is-muted', player.muted || v === 0);
+});
+applyVolume();
+
 $('playResultBtn').addEventListener('click', async () => {
   if (!state.resultPlayURL) return;
   player.src = state.resultPlayURL;
