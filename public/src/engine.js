@@ -27,7 +27,6 @@ const KNOWN_COLOR = {
 };
 
 export const OUTPUTS = {
-  lossless: { label: '무손실 MP4 (H.264 lossless)', ext: 'mp4', seg: 'nut', maxBits: 8 },
   ffv1: { label: '무손실 MKV (FFV1)', ext: 'mkv', seg: 'nut', maxBits: 16 },
   hq: { label: '초고화질 MP4 (CRF 12)', ext: 'mp4', seg: 'nut', maxBits: 16 },
 };
@@ -365,8 +364,6 @@ export class Engine {
 
   #codecArgs(mode) {
     const pf = this.info.pixFmt;
-    // 무손실(qp 0)은 프리셋과 무관하게 픽셀이 100% 같다. 프리셋은 속도·용량만 바꾸므로 가장 빠른 ultrafast 사용
-    if (mode === 'lossless') return ['-c:v', 'libx264', '-preset', 'ultrafast', '-qp', '0', '-bf', '0', '-pix_fmt', pf];
     if (mode === 'ffv1') return ['-c:v', 'ffv1', '-level', '3', '-g', '1', '-slices', '4', '-slicecrc', '1', '-pix_fmt', pf];
     return ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '12', '-bf', '0', '-profile:v', 'high', '-pix_fmt', 'yuv420p'];
   }

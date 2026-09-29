@@ -497,7 +497,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 /* Radio card */
 .choices { display: grid; gap: 8px; }
 .choice {
-  display: grid; grid-template-columns: 20px 1fr; gap: 12px;
+  display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 12px;
   padding: 12px 16px; border-radius: 12px;
   border: 1px solid var(--line-neutral); background: var(--bg-normal);
   cursor: pointer;
@@ -521,7 +521,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
   /* label1 bold */
   font-size: 14px; line-height: 1.429; letter-spacing: 0.0145em; font-weight: 700;
 }
-.choice em { display: block; margin-top: 2px; font-style: normal; color: var(--label-alternative); font-size: 12px; line-height: 1.334; letter-spacing: 0.0252em; }
+.choice em { display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: normal; color: var(--label-alternative); font-size: 12px; line-height: 1.334; letter-spacing: 0.0252em; }
 
 /* Buttons */
 .btn {

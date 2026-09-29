@@ -340,7 +340,6 @@ function renderFileInfo() {
   const notes = [];
   if (i.vfr) notes.push('가변 프레임레이트(VFR) 영상이에요. 결과는 고정 프레임레이트로 저장되어 타이밍이 미세하게 달라질 수 있어요.');
   if (i.converted) notes.push(`${i.srcPixFmt} 형식은 직접 다루지 못해 ${i.pixFmt}로 변환해 처리해요(아주 작은 변환 오차가 생길 수 있어요).`);
-  if (i.bits > 8) notes.push(`${i.bits}bit 영상이라 무손실 MP4 대신 무손실 MKV(FFV1)로 저장해요.`);
   $('fileNotice').hidden = !notes.length;
   $('fileNotice').querySelector('p').textContent = notes.join(' ');
   // 저장 형식 가능 여부
@@ -691,7 +690,7 @@ function updateEstimate() {
   if (!i) return;
   const raw = i.frameBytes * i.frames;
   const mode = selectedOutput();
-  const ratio = mode === 'lossless' ? 0.42 : mode === 'ffv1' ? 0.5 : 0;
+  const ratio = mode === 'ffv1' ? 0.5 : 0;
   const est = ratio ? raw * ratio : (i.width * i.height * i.fps.value * 0.45 * i.duration) / 8;
   const filtered = state.ranges
     ? state.ranges.reduce((a, [s, e]) => a + (e - s), 0)
@@ -717,8 +716,7 @@ function resetSettings() {
   document.querySelector(`[data-diag="${DEFAULTS.diagonals}"]`).click();
   $('ranges').value = '';
   document.querySelector('[data-range="all"]').click();
-  const lossless = document.querySelector('input[name="output"][value="lossless"]');
-  (lossless.disabled ? document.querySelector('input[name="output"][value="ffv1"]') : lossless).checked = true;
+  document.querySelector('input[name="output"][value="ffv1"]').checked = true;
   updateEstimate();
 }
 
@@ -967,7 +965,6 @@ function showResult({ blob, audioNote }, { frames, stats, mode, seconds }) {
   const notes = [];
   if (frames !== i.frames && Math.abs(frames - i.frames) > 1) notes.push(`원본 정보상 ${i.frames}장이지만 실제로 ${frames}장을 읽었어요.`);
   if (audioNote) notes.push(audioNote);
-  if (mode === 'lossless') notes.push('무손실 H.264(High 4:4:4 Predictive)는 QuickTime·아이폰·일부 브라우저에서 재생되지 않을 수 있어요. VLC, Premiere, DaVinci Resolve에서는 열려요.');
   $('resultNote').hidden = !notes.length;
   $('resultNote').querySelector('p').textContent = notes.join(' ');
   $('resultBlock').hidden = false;
