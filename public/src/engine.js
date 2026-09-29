@@ -318,6 +318,26 @@ export class Engine {
     });
   }
 
+  /**
+   * seek 없이 프레임 번호로 정확히 뽑는 느린 대체 경로.
+   * 시작 시간·편집 목록이 특이해 seek 결과가 비는 파일에서 쓴다.
+   */
+  decodeExact(frame, count, lane = 'main') {
+    const target = lane === 'dec' ? this.#pick(this.decLanes) : this.main;
+    return target.run(async (l) => {
+      const out = '/work/exact.raw';
+      await l.exec([
+        '-i', this.inPath, '-map', '0:v:0', '-an', '-sn', '-dn',
+        '-vf', `select='between(n\\,${frame}\\,${frame + count - 1})'`,
+        '-frames:v', String(count), '-fps_mode', 'passthrough',
+        '-f', 'rawvideo', '-pix_fmt', this.info.pixFmt, '-y', out,
+      ]);
+      const data = await l.ff.readFile(out);
+      await l.ff.deleteFile(out);
+      return { data, frames: Math.floor(data.length / this.info.frameBytes) };
+    });
+  }
+
   /** 여러 프레임을 한 번의 순차 디코드로 뽑는다(키프레임이 드문 영상의 분석용). 반환: {data, frames} */
   decodeSelect(indices) {
     return this.main.run(async (l) => {

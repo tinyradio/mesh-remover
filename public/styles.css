@@ -274,7 +274,7 @@ button { font: inherit; color: inherit; }
   padding: 32px 0 64px;
   align-items: start;
 }
-.viewer { position: sticky; top: 88px; display: grid; gap: 12px; }
+.viewer { display: grid; gap: 12px; min-width: 0; }
 .stage {
   position: relative; overflow: hidden;
   border-radius: 16px;
@@ -426,14 +426,6 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 .badge[data-level="mid"] { background: var(--bg-status-cautionary); color: var(--status-cautionary); }
 .badge[data-level="low"] { background: var(--bg-status-positive); color: var(--status-positive); }
 
-.spectrum-wrap { display: grid; grid-template-columns: 144px 1fr; gap: 16px; align-items: center; }
-#spectrum { width: 144px; height: 144px; border-radius: 12px; background: var(--media-bg); cursor: crosshair; }
-.spectrum-legend { display: grid; gap: 8px; }
-.spectrum-legend p { display: flex; align-items: center; gap: 8px; color: var(--label-neutral); font-size: 13px; line-height: 1.385; letter-spacing: 0.0194em; }
-.spectrum-legend .caption { display: block; color: var(--label-alternative); font-size: 12px; line-height: 1.334; letter-spacing: 0.0252em; }
-.sw { flex: none; width: 12px; height: 12px; border-radius: 4px; }
-.sw-red { background: var(--status-negative); opacity: 0.74; }
-.sw-ring { border: 2px solid var(--status-cautionary); border-radius: 50%; }
 
 /* Form */
 .field { display: grid; gap: 8px; }
@@ -518,6 +510,83 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 .result-head strong { font-size: 18px; line-height: 1.444; letter-spacing: -0.002em; font-weight: 700; }
 
 /* ============================================================
+   첨부 파일 카드 · 첨부 확인 · 토스트
+   ============================================================ */
+.file-card { margin-top: 12px; gap: 16px; }
+.file-head { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.file-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: var(--primary-fill-strong); color: var(--primary-normal);
+}
+.file-icon .icon { font-size: 24px; }
+.file-title { min-width: 0; }
+.file-label {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--status-positive);
+  /* caption1 bold */
+  font-size: 12px; line-height: 1.334; letter-spacing: 0.0252em; font-weight: 700;
+}
+.file-label .icon { font-size: 16px; }
+.file-card .file-name { margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: normal; }
+.file-actions { display: flex; gap: 8px; }
+.file-score {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 12px 16px; border-radius: 12px; background: var(--fill-alternative);
+}
+.file-score-label { color: var(--label-neutral); font-size: 14px; line-height: 1.429; letter-spacing: 0.0145em; font-weight: 500; }
+.meta-wide { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.btn-small { width: auto; height: 32px; padding: 0 12px; border-radius: 8px; font-size: 13px; line-height: 1.385; letter-spacing: 0.0194em; gap: 4px; }
+.btn-small .icon { font-size: 16px; }
+.btn-outlined:disabled { cursor: not-allowed; opacity: 0.43; }
+.text-btn-assistive { color: var(--label-alternative); font-weight: 500; }
+.text-btn-assistive:hover { color: var(--label-normal); }
+
+/* 드래그 중: 놓을 수 있다는 걸 분명히 */
+.drop.over { box-shadow: 0 0 0 2px var(--primary-normal), var(--shadow-medium); }
+.drop.over .drop-inner { border-style: solid; }
+.drop.over .drop-icon { background: var(--primary-normal); color: var(--static-white); }
+
+/* 첨부 직후 상태 */
+.drop-busy { gap: 16px; }
+.attached {
+  display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: center;
+  width: min(360px, 100%); padding: 16px; border-radius: 12px;
+  background: var(--bg-normal); box-shadow: var(--shadow-small); text-align: left;
+}
+.attached-text { min-width: 0; }
+.attached-name {
+  margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--label-normal);
+  /* body1 bold */
+  font-size: 16px; line-height: 1.5; letter-spacing: 0.0057em; font-weight: 700;
+}
+.attached-size { color: var(--label-alternative); font-size: 13px; line-height: 1.385; letter-spacing: 0.0194em; }
+.drop-busy > p { color: var(--label-alternative); font-size: 14px; }
+
+/* Toast (inverse) */
+.toast {
+  position: fixed; left: 50%; bottom: 32px; z-index: 30;
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px;
+  max-width: calc(100% - 32px); padding: 12px 16px; border-radius: 12px;
+  background: var(--inverse-background); color: var(--inverse-label);
+  box-shadow: var(--shadow-medium);
+  animation: toast-in 0.2s var(--ease);
+}
+.toast .icon { font-size: 20px; color: var(--status-positive); }
+.toast p { font-size: 14px; line-height: 1.429; letter-spacing: 0.0145em; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+@media (max-width: 767px) {
+  .file-head { grid-template-columns: 48px minmax(0, 1fr); }
+  .file-actions { grid-column: 1 / -1; }
+  .file-actions .btn { flex: 1; }
+  .meta-wide { grid-template-columns: 1fr 1fr; }
+}
+
+/* ============================================================
    Explain
    ============================================================ */
 .explain { padding: 64px 0 80px; border-top: 1px solid var(--line-alternative); }
@@ -539,7 +608,6 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
    ============================================================ */
 @media (max-width: 991px) {
   .workspace { grid-template-columns: 1fr; }
-  .viewer { position: static; }
 }
 @media (max-width: 767px) {
   main { padding: 0 16px; }
@@ -552,8 +620,6 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
   .explain { padding: 40px 0 56px; }
   .explain-row { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
   .explain h3 { font-size: 20px; line-height: 1.4; letter-spacing: -0.012em; }
-  .spectrum-wrap { grid-template-columns: 1fr; justify-items: start; }
-  #spectrum { width: 200px; height: 200px; }
   .hint { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

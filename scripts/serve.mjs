@@ -21,7 +21,7 @@ createServer(async (req, res) => {
     if (!file.startsWith(root)) throw new Error('forbidden');
     if ((await stat(file)).isDirectory()) file = join(file, 'index.html');
     const body = await readFile(file);
-    res.writeHead(200, { ...headers, 'Content-Type': types[extname(file)] || 'application/octet-stream', 'Content-Length': body.length });
+    res.writeHead(200, { ...headers, 'Content-Type': types[extname(file)] || 'application/octet-stream', 'Content-Length': body.length, 'Cache-Control': 'no-cache' });
     res.end(body);
   } catch {
     res.writeHead(404, headers);

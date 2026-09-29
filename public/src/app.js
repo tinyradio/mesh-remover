@@ -81,7 +81,6 @@ const state = {
   info: null,
   settings: { strength: 1, maxPeriod: 3.2, angleWidth: 22, diagonals: 'both' },
   detected: [],        // 분석에서 찾은 튀는 점들 {fx, fy, strength, on}
-  custom: [],          // 사용자가 클릭으로 추가한 점
   spectrum: null,      // analyzeSpectrum 결과
   mask: null,
   ranges: null,        // null = 전체
@@ -248,11 +247,18 @@ function putCanvas(c, img) {
 // ---------------------------------------------------------------------------
 const drop = $('drop');
 const fileInput = $('fileInput');
-drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
-drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+const dropTitle = drop.querySelector('.drop-title');
+const DROP_TITLE = dropTitle.textContent;
+const DROP_NOTE = drop.querySelector('.drop-note').textContent;
+const setOver = (on) => {
+  drop.classList.toggle('over', on);
+  dropTitle.textContent = on ? '여기에 놓으면 바로 열려요' : DROP_TITLE;
+};
+drop.addEventListener('dragover', (e) => { e.preventDefault(); setOver(true); });
+drop.addEventListener('dragleave', (e) => { if (!drop.contains(e.relatedTarget)) setOver(false); });
 drop.addEventListener('drop', (e) => {
   e.preventDefault();
-  drop.classList.remove('over');
+  setOver(false);
   const f = e.dataTransfer.files?.[0];
   if (f) openFile(f);
 });
@@ -274,13 +280,19 @@ async function openFile(file) {
   const busy = $('dropBusy');
   const inWorkspace = !$('workspace').hidden;
   if (!inWorkspace) { busy.hidden = false; drop.querySelector('.drop-inner').hidden = true; }
+  $('dropBusyName').textContent = file.name;
+  $('dropBusySize').textContent = fmtBytes(file.size);
   $('dropBusyText').textContent = '엔진 준비 중';
+  const note = drop.querySelector('.drop-note');
+  note.textContent = DROP_NOTE;
+  note.style.color = '';
+  if (inWorkspace) showToast(`"${file.name}" 여는 중`);
   try {
     await engineReady;
     $('dropBusyText').textContent = '영상 정보를 읽는 중';
     const info = await engine.open(file);
     state.info = info;
-    state.detected = []; state.custom = []; state.spectrum = null;
+    state.detected = []; state.spectrum = null;
     resetResult();
     renderFileInfo();
     $('intro').hidden = true;
@@ -292,12 +304,12 @@ async function openFile(file) {
     await loadPreview(best);
     $('startBtn').disabled = false;
     updateEstimate();
+    showToast(`"${file.name}" 첨부됨`);
   } catch (err) {
     if (!inWorkspace) { $('intro').hidden = false; $('workspace').hidden = true; }
     showError(err);
     if (!inWorkspace) {
       // 인트로 화면에서도 오류를 보여준다
-      const note = drop.querySelector('.drop-note');
       note.textContent = `열 수 없어요: ${err.message || err}`;
       note.style.color = 'var(--status-negative)';
     }
@@ -346,7 +358,6 @@ async function analyze() {
   const badge = $('scoreBadge');
   badge.textContent = '분석 중';
   delete badge.dataset.level;
-  drawSpectrum();
   let lo = 0, hi = i.frames - 1;
   if (state.ranges) {
     lo = Math.min(hi, Math.floor(state.ranges[0][0] * i.fps.value));
@@ -368,16 +379,20 @@ async function analyze() {
     const score = analyzeSpectrum(p, { maxPeriod: state.settings.maxPeriod }).meshScore;
     if (score > best.score) best = { index: f, score };
   };
+  let sampled = 0;
   if (cheap.length >= 3) {
     for (const f of idx) {
       const { data, frames } = await engine.decode(f, 1);
-      if (frames) await addSample(f, data.slice(0, i.ySize));
+      if (frames) { await addSample(f, data.slice(0, i.ySize)); sampled++; }
     }
-  } else {
+  }
+  if (!sampled) {
     // 키프레임이 드물면 seek마다 처음부터 디코드하게 되므로 한 번의 순차 디코드로 모두 뽑는다
     const { data, frames } = await engine.decodeSelect(idx);
     for (let j = 0; j < frames; j++) await addSample(idx[j], data.slice(j * i.frameBytes, j * i.frameBytes + i.ySize));
+    sampled = frames;
   }
+  if (!sampled) throw new Error('분석할 프레임을 읽지 못했어요. 지원하지 않는 형식일 수 있어요.');
   state.spectrum = analyzeSpectrum(total, { maxPeriod: state.settings.maxPeriod });
   const s = state.spectrum.meshScore;
   // 자동 노치: 대각선 근처에서 강하게 튀지만 쐐기 영역에 안 걸린 점만 기본으로 켠다
@@ -398,94 +413,14 @@ async function analyze() {
 }
 
 function currentPeaks() {
-  return [...state.detected.filter((p) => p.on), ...state.custom].map((p) => ({ fx: p.fx, fy: p.fy, radius: 1.6 / TILE }));
-}
-
-// 쐐기(빨간 영역)에 이미 포함된 점은 따로 표시·토글할 필요가 없다
-function visiblePeaks() {
-  const w = state.wedge;
-  return state.detected.filter((p) => {
-    if (p.on || !w) return true;
-    const kx = Math.round(p.fx * TILE + TILE) % TILE, ky = Math.round(p.fy * TILE + TILE) % TILE;
-    return w[ky * TILE + kx] < 0.5;
-  });
+  return state.detected.filter((p) => p.on).map((p) => ({ fx: p.fx, fy: p.fy, radius: 1.6 / TILE }));
 }
 
 async function pushMask() {
   const params = { ...state.settings, peaks: currentPeaks() };
   state.mask = buildMask(params);
-  state.wedge = buildMask({ ...state.settings, peaks: [] });
   await pool.broadcast({ type: 'mask', params });
-  drawSpectrum();
 }
-
-function drawSpectrum() {
-  const c = $('spectrum');
-  const ctx = c.getContext('2d');
-  const S = c.width / TILE;
-  const img = ctx.createImageData(c.width, c.height);
-  const d = img.data;
-  const sp = state.spectrum;
-  let lo = 0, hi = 1;
-  if (sp) {
-    const vals = Array.from(sp.logP).filter((_, k) => k !== 0).sort((a, b) => a - b);
-    lo = vals[Math.floor(vals.length * 0.02)];
-    hi = vals[Math.floor(vals.length * 0.998)];
-  }
-  const half = TILE / 2;
-  for (let py = 0; py < c.height; py++) {
-    const ky = (Math.floor(py / S) - half + TILE) % TILE;
-    for (let px = 0; px < c.width; px++) {
-      const kx = (Math.floor(px / S) - half + TILE) % TILE;
-      const k = ky * TILE + kx;
-      let g = sp ? Math.min(1, Math.max(0, (sp.logP[k] - lo) / (hi - lo))) : 0.08;
-      g = Math.pow(g, 0.9) * 220 + 12;
-      const m = state.mask ? state.mask[k] * 0.62 : 0;
-      const o = (py * c.width + px) * 4;
-      // WDS status.negative (#FF4242)
-      d[o] = g * (1 - m) + 255 * m;
-      d[o + 1] = g * (1 - m) + 66 * m;
-      d[o + 2] = g * (1 - m) + 66 * m;
-      d[o + 3] = 255;
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-  const toPx = (f) => (f * TILE + half) * S + S / 2;
-  const ring = (p, on, color) => {
-    for (const sgn of [1, -1]) {
-      ctx.beginPath();
-      ctx.arc(toPx(sgn * p.fx), toPx(sgn * p.fy), 7, 0, Math.PI * 2);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = color;
-      ctx.setLineDash(on ? [] : [3, 3]);
-      ctx.stroke();
-    }
-  };
-  ctx.save();
-  for (const p of visiblePeaks()) ring(p, p.on, p.on ? '#FF9200' : 'rgba(255,146,0,0.55)'); // status.cautionary
-  for (const p of state.custom) ring(p, true, '#3385FF'); // primary (dark)
-  ctx.restore();
-}
-
-$('spectrum').addEventListener('click', async (e) => {
-  if (state.running || !state.info) return;
-  const c = e.currentTarget;
-  const rect = c.getBoundingClientRect();
-  const S = c.width / TILE;
-  const px = ((e.clientX - rect.left) / rect.width) * c.width;
-  const py = ((e.clientY - rect.top) / rect.height) * c.height;
-  const fx = (Math.floor(px / S) - TILE / 2) / TILE;
-  const fy = (Math.floor(py / S) - TILE / 2) / TILE;
-  if (Math.hypot(fx, fy) < 1 / 16) return; // 저주파(큰 모양)는 건드리지 않음
-  const near = (p) => Math.min(Math.hypot(p.fx - fx, p.fy - fy), Math.hypot(p.fx + fx, p.fy + fy)) < 4 / TILE;
-  const hitD = visiblePeaks().find(near);
-  const hitC = state.custom.findIndex(near);
-  if (hitD) hitD.on = !hitD.on;
-  else if (hitC >= 0) state.custom.splice(hitC, 1);
-  else state.custom.push({ fx, fy });
-  await pushMask();
-  refilterPreview();
-});
 
 // ---------------------------------------------------------------------------
 // 미리보기 뷰어
@@ -525,9 +460,11 @@ async function loadPreview(index) {
   const i = state.info;
   $('stageLoading').hidden = false;
   try {
-    const { data, frames } = await engine.decode(index, 1);
+    let { data, frames } = await engine.decode(index, 1);
+    if (!frames) ({ data, frames } = await engine.decodeExact(index, 1));
+    if (!frames && index > 0) { index = 0; ({ data, frames } = await engine.decode(0, 1)); }
     if (token !== previewToken) return;
-    if (!frames) throw new Error('이 위치의 프레임을 읽지 못했어요.');
+    if (!frames) throw new Error('이 영상의 프레임을 읽지 못했어요. 지원하지 않는 형식일 수 있어요.');
     state.preview.index = index;
     state.preview.raw = data;
     const s = $('scrub');
@@ -674,6 +611,7 @@ view.addEventListener('dblclick', (e) => {
 // 설정
 // ---------------------------------------------------------------------------
 const applySettings = debounce(async () => {
+  if (!state.info) return;
   await pushMask();
   refilterPreview();
 }, 160);
@@ -749,6 +687,60 @@ function updateEstimate() {
 }
 
 // ---------------------------------------------------------------------------
+// 초기화
+// ---------------------------------------------------------------------------
+const DEFAULTS = { strength: 100, period: 3.2, angle: 22, diagonals: 'both' };
+
+/** 보정 설정만 기본값으로 */
+function resetSettings() {
+  if (state.running) return;
+  for (const [id, v] of [['strength', DEFAULTS.strength], ['period', DEFAULTS.period], ['angle', DEFAULTS.angle]]) {
+    const el = $(id);
+    el.value = String(v);
+    el.dispatchEvent(new Event('input'));
+  }
+  document.querySelector(`[data-diag="${DEFAULTS.diagonals}"]`).click();
+  $('ranges').value = '';
+  document.querySelector('[data-range="all"]').click();
+  const lossless = document.querySelector('input[name="output"][value="lossless"]');
+  (lossless.disabled ? document.querySelector('input[name="output"][value="ffv1"]') : lossless).checked = true;
+  updateEstimate();
+}
+
+/** 첨부한 영상을 비우고 처음 화면으로 */
+function resetAll() {
+  if (state.running) return;
+  previewToken++;
+  state.info = null; // 먼저 비워야 설정 변경 이벤트가 미리보기를 다시 그리지 않는다
+  resetSettings();
+  resetResult();
+  clearError();
+  engine.releaseExtraLanes();
+  state.preview = { index: 0, raw: null, fixed: null };
+  state.detected = [];
+  state.spectrum = null;
+  for (const c of Object.values(canvases)) { c.width = 0; c.height = 0; }
+  $('startBtn').disabled = true;
+  $('estimate').textContent = '';
+  $('workspace').hidden = true;
+  $('intro').hidden = false;
+  window.scrollTo({ top: 0 });
+  showToast('초기화했어요');
+}
+
+$('resetSettings').addEventListener('click', resetSettings);
+$('resetAll').addEventListener('click', resetAll);
+
+let toastTimer;
+function showToast(text) {
+  const t = $('toast');
+  t.querySelector('p').textContent = text;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 2400);
+}
+
+// ---------------------------------------------------------------------------
 // 실행: 디코드 → 필터 → 인코드를 겹쳐서(파이프라인) 처리
 // ---------------------------------------------------------------------------
 let abort = null;
@@ -816,8 +808,14 @@ async function run() {
     const slots = new Array(plan.length);
     let done = 0;
     const runChunk = async (c, j) => {
-      const d = await engine.decode(c.start, c.count, 'dec');
+      let d = await engine.decode(c.start, c.count, 'dec');
       check();
+      // 마지막 구간이 아닌데 덜 읽혔다면 seek가 어긋난 것 → 프레임 번호로 정확히 다시 읽는다
+      if (d.frames < c.count && j < plan.length - 1) {
+        d = await engine.decodeExact(c.start, c.count, 'dec');
+        check();
+        if (d.frames < c.count) throw new Error(`${c.start}~${c.start + c.count - 1}번 프레임을 읽지 못했어요.`);
+      }
       if (!d.frames) { slots[j] = { frames: 0, full: false }; return; }
       await filterChunk(d.data, c.start, d.frames, stats);
       check();
@@ -893,7 +891,7 @@ $('cancelBtn').addEventListener('click', async () => {
 });
 
 function setControlsDisabled(dis) {
-  for (const el of document.querySelectorAll('.panel input, .panel .seg button, #changeFile, #startBtn')) {
+  for (const el of document.querySelectorAll('.panel input, .panel .seg button, #changeFile, #resetAll, #resetSettings, #startBtn')) {
     if (el.name === 'output' && state.info && state.info.bits > OUTPUTS[el.value].maxBits) continue;
     el.disabled = dis;
   }
