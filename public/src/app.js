@@ -805,8 +805,7 @@ async function run() {
   abort = { aborted: false };
   const myAbort = abort;
   document.body.classList.add('is-running');
-  $('actionBlock').hidden = true;
-  $('progressBlock').hidden = false;
+  setActionMode('running');
   setControlsDisabled(true);
   const N = Math.max(4, Math.min(240, Math.floor(CHUNK_BYTES / i.frameBytes)));
   const stats = { filtered: 0, meanAbs: 0 };
@@ -900,12 +899,11 @@ async function run() {
       await engine.hardReset().catch(() => {});
       await pushMask().catch(() => {});
     }
-    $('actionBlock').hidden = false;
   } finally {
     engine.releaseExtraLanes();
     state.running = false;
     document.body.classList.remove('is-running');
-    $('progressBlock').hidden = true;
+    if ($('actionArea').dataset.mode === 'running') setActionMode('idle');
     setControlsDisabled(false);
   }
 }
@@ -934,7 +932,19 @@ function resetResult() {
   if (state.resultURL) URL.revokeObjectURL(state.resultURL);
   state.resultURL = null;
   $('resultBlock').hidden = true;
-  $('actionBlock').hidden = false;
+  setActionMode('idle');
+}
+
+/** 하단 ActionArea 상태: idle(보정 시작) · running(진행·취소) · done(다운로드·다시) */
+function setActionMode(mode) {
+  $('actionArea').dataset.mode = mode;
+  $('startBtn').hidden = mode !== 'idle';
+  $('estimate').hidden = mode !== 'idle';
+  $('progressBlock').hidden = mode !== 'running';
+  $('cancelBtn').hidden = mode !== 'running';
+  $('downloadLink').hidden = mode !== 'done';
+  $('againBtn').hidden = mode !== 'done';
+  fitPanel();
 }
 
 function showResult({ blob, audioNote }, { frames, stats, mode, seconds }) {
@@ -960,10 +970,9 @@ function showResult({ blob, audioNote }, { frames, stats, mode, seconds }) {
   if (mode === 'lossless') notes.push('무손실 H.264(High 4:4:4 Predictive)는 QuickTime·아이폰·일부 브라우저에서 재생되지 않을 수 있어요. VLC, Premiere, DaVinci Resolve에서는 열려요.');
   $('resultNote').hidden = !notes.length;
   $('resultNote').querySelector('p').textContent = notes.join(' ');
-  $('actionBlock').hidden = true;
   $('resultBlock').hidden = false;
-  fitPanel();
-  $('resultBlock').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  setActionMode('done');
+  requestAnimationFrame(() => { $('panelScroll').scrollTop = 0; }); // 완료 요약이 보이도록 맨 위로
 }
 $('againBtn').addEventListener('click', resetResult);
 

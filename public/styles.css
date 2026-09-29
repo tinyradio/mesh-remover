@@ -340,30 +340,74 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 /* ============================================================
    Panel cards
    ============================================================ */
-.panel { display: grid; gap: 12px; align-content: start; }
-/* 하단 고정 영역: 보정 버튼·진행·결과·오류 */
-.panel-dock {
-  position: sticky; bottom: 0; z-index: 6;
-  display: grid; gap: 12px;
-  padding-top: 24px; margin-top: -12px;
-  background: linear-gradient(to top, var(--bg-alternative) calc(100% - 24px), transparent);
+/* 우측 패널: 카드 하나에 섹션을 선과 여백으로 구분 + 하단 WDS ActionArea */
+.panel {
+  display: flex; flex-direction: column;
+  background: var(--bg-normal);
+  border: 1px solid var(--line-alternative);
+  border-radius: 16px;
 }
-.panel-dock > .card { box-shadow: var(--shadow-medium); }
-.panel-dock > .msg { background-color: var(--bg-normal); background-image: linear-gradient(var(--bg-status-negative), var(--bg-status-negative)); }
+.panel-scroll { display: flex; flex-direction: column; }
+.panel-section { display: grid; gap: 16px; padding: 24px 20px; }
+.panel-section:not([hidden]) ~ .panel-section { border-top: 1px solid var(--line-alternative); }
+.panel-section h2 {
+  /* headline2 bold */
+  font-size: 17px; line-height: 1.412; font-weight: 700; color: var(--label-normal);
+}
+
+/* WDS ActionArea (variant="strong", sticky background) */
+.panel .action-area {
+  position: sticky; bottom: 0; z-index: 6;
+  display: flex; flex-direction: column;
+  padding: 20px;
+  border-radius: 0 0 16px 16px;
+  background: var(--bg-normal);
+}
+.panel .action-area::before {
+  /* 위쪽으로 콘텐츠가 자연스럽게 가려지는 그라데이션 마스크 */
+  content: ""; position: absolute; left: 0; bottom: 100%; width: 100%; height: 20px;
+  background: linear-gradient(to top, var(--bg-normal), transparent);
+  pointer-events: none;
+}
+.action-extra { margin-bottom: 16px; }
+.action-extra.msg { margin-bottom: 16px; }
+#progressBlock { display: grid; gap: 12px; }
+#progressBlock strong { font-size: 15px; font-weight: 700; letter-spacing: 0.0096em; }
+#progressBlock .field-row .num { color: var(--primary-normal); font-size: 15px; font-weight: 700; }
+.action-caption {
+  margin-bottom: 16px; text-align: center;
+  color: var(--label-alternative);
+  /* label2 regular */
+  font-size: 13px; line-height: 1.385; letter-spacing: 0.0194em;
+}
+.action-caption:empty { display: none; }
+.action-wrapper { display: flex; flex-direction: column; gap: 8px; }
+.action-sub {
+  /* ActionAreaButton variant="sub" → TextButton assistive small */
+  align-self: center; margin: 8px 0; padding: 0;
+  border: 0; background: none; cursor: pointer;
+  color: var(--label-alternative);
+  font-size: 14px; line-height: 1.429; letter-spacing: 0.0145em; font-weight: 600;
+}
+.action-sub:hover { color: var(--label-normal); }
 
 @media (min-width: 992px) {
-  /* 우측 패널: 화면 높이에 맞춰 고정하고 내부 스크롤 */
+  /* 화면 높이에 맞춰 고정, 섹션 영역만 스크롤 */
   .panel {
     position: sticky; top: 24px;
     max-height: var(--panel-max-h, calc(100dvh - 48px));
+    overflow: hidden;
+  }
+  .panel-scroll {
+    flex: 1 1 auto; min-height: 0;
     overflow-y: auto; overscroll-behavior: contain;
-    padding: 4px 4px 0; margin: -4px -4px 0;
     scrollbar-width: thin; scrollbar-color: var(--fill-strong) transparent;
   }
-  .panel::-webkit-scrollbar { width: 6px; }
-  .panel::-webkit-scrollbar-thumb { background: var(--fill-strong); border-radius: 6px; }
-  .panel-dock { padding-bottom: 4px; }
+  .panel-scroll::-webkit-scrollbar { width: 6px; }
+  .panel-scroll::-webkit-scrollbar-thumb { background: var(--fill-strong); border-radius: 6px; }
+  .panel .action-area { position: relative; flex: none; }
 }
+
 .card {
   display: grid; gap: 16px;
   padding: 20px;
@@ -499,13 +543,8 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 .btn-outlined:hover:not(:disabled) { background: var(--fill-alternative); }
 .drop-btn { width: auto; }
 
-.card-action { gap: 12px; }
-.card-progress { gap: 16px; }
-.card-progress strong { font-size: 15px; font-weight: 700; letter-spacing: 0.0096em; }
-.card-progress .field-row .num { color: var(--primary-normal); font-size: 15px; font-weight: 700; }
 .bar { height: 8px; border-radius: 8px; background: var(--fill-normal); overflow: hidden; }
 .bar span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--primary-normal); transition: width 0.3s var(--ease); }
-.card-result { gap: 16px; }
 .result-head { display: flex; align-items: center; gap: 8px; }
 .result-head .icon { font-size: 24px; color: var(--status-positive); }
 .result-head strong { font-size: 18px; line-height: 1.444; letter-spacing: -0.002em; font-weight: 700; }
@@ -684,7 +723,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 }
 
 /* ActionArea (sticky, 위쪽 그라데이션) */
-.action-area {
+.modal .action-area {
   position: sticky; bottom: 0; z-index: 5;
   padding: 20px var(--modal-margin) var(--modal-margin);
   background: linear-gradient(to top, var(--bg-elevated) calc(100% - 20px), transparent);
