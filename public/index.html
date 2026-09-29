@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' blob: data:; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>그물지우개 — 영상 그물무늬 제거</title>
+  <meta name="description" content="AI 영상의 그물무늬(격자 무늬)만 골라서 지우고 무손실로 다시 저장합니다. 영상은 브라우저 밖으로 나가지 않아요.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="src/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="그물지우개 처음으로">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 15 15 7M7 21 21 7M9 25 25 9M15 25 25 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".35"/><path d="M8 24 24 8" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <span>그물지우개</span>
+    </a>
+    <div class="topbar-right">
+      <span class="pill pill-lock" title="영상은 업로드되지 않으며, 보안 정책(CSP)으로 외부 전송이 차단되어 있어요.">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        로컬 전용 · 업로드 없음
+      </span>
+      <span class="pill pill-engine" id="engineStatus" data-state="loading">
+        <span class="dot"></span><span class="label">엔진 준비 중</span>
+      </span>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro" id="intro">
+      <div class="intro-copy">
+        <p class="eyebrow">AI 영상 후보정</p>
+        <h1>숲 바닥의 모기장 무늬,<br>그 줄무늬만 골라서 지워요.</h1>
+        <p class="lead">AI가 영상을 키울 때 남기는 "롤러 자국"은 항상 같은 각도·같은 간격이에요. 그래서 흐리게 뭉개지 않고, 그 주파수만 정확히 빼낼 수 있어요. 나뭇잎과 지푸라기는 그대로 남습니다.</p>
+        <ol class="steps">
+          <li><span class="num">01</span><div><strong>영상 넣기</strong><p>파일은 이 브라우저 탭 안에서만 열려요.</p></div></li>
+          <li><span class="num">02</span><div><strong>무늬 확인</strong><p>주파수 지도와 5배 돋보기로 전후를 비교해요.</p></div></li>
+          <li><span class="num">03</span><div><strong>무손실 저장</strong><p>다시 압축 손실 없이 합치고, 오디오는 원본 그대로.</p></div></li>
+        </ol>
+      </div>
+      <label class="drop" id="drop" tabindex="0">
+        <input type="file" id="fileInput" accept="video/*,.mkv,.mov,.mp4,.webm,.avi,.m4v" hidden>
+        <div class="drop-inner">
+          <div class="drop-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><rect x="6" y="11" width="36" height="26" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M20 19.5v9l8-4.5z" fill="currentColor"/></svg>
+          </div>
+          <p class="drop-title">영상을 여기로 끌어오세요</p>
+          <p class="drop-sub">또는 <u>클릭해서 선택</u> · MP4, MOV, MKV, WebM</p>
+          <p class="drop-note">서버로 전송되지 않아요. 네트워크를 끊어도 동작합니다(엔진 로딩 후).</p>
+        </div>
+        <div class="drop-busy" id="dropBusy" hidden>
+          <div class="skeleton-bar"><span></span></div>
+          <p id="dropBusyText">영상 정보를 읽는 중</p>
+        </div>
+      </label>
+    </section>
+
+    <section class="workspace" id="workspace" hidden>
+      <div class="viewer">
+        <div class="stage" id="stage">
+          <canvas id="view"></canvas>
+          <div class="stage-label left" id="labelLeft">원본</div>
+          <div class="stage-label right" id="labelRight">보정</div>
+          <div class="split-line" id="splitLine"><span></span></div>
+          <div class="stage-loading" id="stageLoading" hidden><div class="skeleton-bar"><span></span></div><p>프레임 준비 중</p></div>
+        </div>
+        <div class="toolbar">
+          <div class="seg" role="group" aria-label="확대">
+            <button type="button" data-zoom="fit" class="on">맞춤</button>
+            <button type="button" data-zoom="2">2×</button>
+            <button type="button" data-zoom="5">5×</button>
+          </div>
+          <div class="seg" role="group" aria-label="보기">
+            <button type="button" data-view="split" class="on">비교</button>
+            <button type="button" data-view="orig">원본</button>
+            <button type="button" data-view="fixed">보정</button>
+            <button type="button" data-view="diff">차이 ×8</button>
+          </div>
+          <span class="hint" id="panHint">확대 후 드래그로 이동 · 비교 모드에서 가로 드래그로 경계 이동</span>
+        </div>
+        <div class="scrubber">
+          <input type="range" id="scrub" min="0" max="1000" value="0" step="1" aria-label="미리볼 프레임 위치">
+          <span class="mono" id="scrubTime">0:00.00</span>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="block">
+          <div class="block-head"><h2>파일</h2><button type="button" class="link" id="changeFile">다른 영상</button></div>
+          <p class="file-name" id="fileName"></p>
+          <dl class="meta" id="meta"></dl>
+          <p class="notice" id="fileNotice" hidden></p>
+        </div>
+
+        <div class="block">
+          <div class="block-head"><h2>무늬 지도</h2><span class="badge" id="scoreBadge">분석 중</span></div>
+          <div class="spectrum-wrap">
+            <canvas id="spectrum" width="256" height="256" aria-label="주파수 지도"></canvas>
+            <div class="spectrum-legend">
+              <p><i class="sw sw-red"></i>지울 영역</p>
+              <p><i class="sw sw-ring"></i>튀는 점 (클릭해서 켜고 끄기)</p>
+              <p class="muted">가운데는 큰 모양, 바깥은 촘촘한 무늬예요. 그물무늬는 네 모서리의 대각선에 숨어 있어요.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2>보정 설정</h2>
+          <div class="field">
+            <div class="field-row"><label for="strength">강도</label><output class="mono" id="strengthOut">100%</output></div>
+            <input type="range" id="strength" min="0" max="100" value="100">
+          </div>
+          <div class="field">
+            <div class="field-row"><label for="period">대상 간격</label><output class="mono" id="periodOut">3.2px 이하</output></div>
+            <input type="range" id="period" min="2.2" max="6" step="0.1" value="3.2">
+            <p class="help">이 값보다 촘촘한 대각선 줄무늬만 지워요. 무늬가 남으면 올리고, 디테일이 줄면 내리세요.</p>
+          </div>
+          <div class="field">
+            <div class="field-row"><label for="angle">각도 폭</label><output class="mono" id="angleOut">±22°</output></div>
+            <input type="range" id="angle" min="6" max="40" step="1" value="22">
+          </div>
+          <div class="field">
+            <label>줄무늬 방향</label>
+            <div class="seg seg-full" role="group" aria-label="줄무늬 방향" id="diagSeg">
+              <button type="button" data-diag="both" class="on">양쪽 대각선</button>
+              <button type="button" data-diag="rising">／ 방향</button>
+              <button type="button" data-diag="falling">＼ 방향</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2>처리 구간</h2>
+          <div class="seg seg-full" role="group" aria-label="처리 구간" id="rangeSeg">
+            <button type="button" data-range="all" class="on">영상 전체</button>
+            <button type="button" data-range="custom">구간 지정</button>
+          </div>
+          <div class="field" id="rangeField" hidden>
+            <label for="ranges">초 단위 구간</label>
+            <input type="text" id="ranges" placeholder="예: 0-2, 6-9" inputmode="decimal" autocomplete="off">
+            <p class="help">지정한 구간만 보정하고 나머지는 원본 픽셀 그대로 둬요. 경계는 0.2초에 걸쳐 부드럽게 전환돼요.</p>
+            <p class="error" id="rangeError" hidden></p>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2>저장 형식</h2>
+          <div class="choices" id="outputChoices">
+            <label class="choice"><input type="radio" name="output" value="lossless" checked><span><strong>무손실 MP4</strong><em>H.264 lossless · 추가 손실 0 · 파일이 커요. QuickTime·아이폰에선 재생이 안 될 수 있어요(VLC·편집툴 OK).</em></span></label>
+            <label class="choice"><input type="radio" name="output" value="ffv1"><span><strong>무손실 MKV</strong><em>FFV1 · 10bit 영상까지 비트 단위 보존 · 편집·보관용.</em></span></label>
+            <label class="choice"><input type="radio" name="output" value="hq"><span><strong>초고화질 MP4</strong><em>CRF 12 · 눈으로 구분 불가 수준 · 어디서나 재생.</em></span></label>
+          </div>
+        </div>
+
+        <div class="block block-action" id="actionBlock">
+          <button type="button" class="primary" id="startBtn" disabled>
+            <span>보정하고 합치기</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <p class="help" id="estimate"></p>
+        </div>
+
+        <div class="block block-progress" id="progressBlock" hidden>
+          <div class="field-row"><strong id="stageText">준비 중</strong><span class="mono" id="pctText">0%</span></div>
+          <div class="bar"><span id="barFill"></span></div>
+          <dl class="meta meta-tight">
+            <div><dt>프레임</dt><dd class="mono" id="frameText">0 / 0</dd></div>
+            <div><dt>속도</dt><dd class="mono" id="fpsText">-</dd></div>
+            <div><dt>남은 시간</dt><dd class="mono" id="etaText">-</dd></div>
+            <div><dt>누적 크기</dt><dd class="mono" id="sizeText">-</dd></div>
+          </dl>
+          <button type="button" class="ghost" id="cancelBtn">취소</button>
+        </div>
+
+        <div class="block block-result" id="resultBlock" hidden>
+          <div class="result-head">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8 12.3 2.7 2.7L16.3 9.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <strong>완료했어요</strong>
+          </div>
+          <dl class="meta meta-tight" id="resultMeta"></dl>
+          <p class="notice" id="resultNote" hidden></p>
+          <a class="primary" id="downloadLink" download>
+            <span>다운로드</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <button type="button" class="ghost" id="againBtn">설정 바꿔서 다시</button>
+        </div>
+
+        <p class="error block-error" id="errorBox" hidden></p>
+      </aside>
+    </section>
+
+    <section class="explain">
+      <div class="explain-row">
+        <div class="explain-title"><span class="num">왜</span><h3>그물무늬는 노이즈가 아니에요</h3></div>
+        <p>AI는 작은 밑그림을 그린 뒤 "확대 기계"로 2배씩 여러 번 키워요. 이 기계가 빈 칸을 채울 때 한 칸은 진하게, 한 칸은 연하게 채우는 버릇이 있어서, 페인트 롤러 자국처럼 같은 크기·같은 방향의 무늬가 화면 전체에 깔립니다. 하늘이나 흰 옷에선 묻히지만, 어둡고 자잘한 숲 바닥에선 잘 보여요. 규칙이 있는 무늬라서 일반 노이즈 제거기는 "원래 그림"으로 보고 그냥 둡니다.</p>
+      </div>
+      <div class="explain-row">
+        <div class="explain-title"><span class="num">어떻게</span><h3>"어디를"이 아니라 "어떤 무늬를" 지워요</h3></div>
+        <p>합창단에서 한 사람이 계속 "삐—" 소리를 내면, 전체 볼륨을 줄이는 대신 그 음 하나만 빼면 되죠. 영상을 128×128 조각으로 나눠 주파수 지도로 바꾼 뒤, 45° 대각선·2~3픽셀 간격에 해당하는 네 모서리 영역만 줄이고 다시 합쳐요. 밝기(Y) 채널만 다루고 색(UV)과 오디오는 원본 그대로 두기 때문에, 대부분의 픽셀은 255단계 중 1~2단계만 바뀝니다.</p>
+      </div>
+      <div class="explain-row">
+        <div class="explain-title"><span class="num">보안</span><h3>영상은 이 탭 밖으로 나가지 않아요</h3></div>
+        <p>디코딩·보정·인코딩 모두 브라우저 안의 WebAssembly(ffmpeg)와 Web Worker에서 돌아가요. 페이지에는 외부 서버로의 전송을 막는 보안 정책(CSP: connect-src 'self')이 걸려 있고, 엔진 파일까지 모두 같은 도메인에서 받아요. 작업이 끝나면 탭을 닫는 순간 메모리에서 사라집니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>그물지우개</span>
+    <span class="muted">ffmpeg.wasm (LGPL/GPL) · 모든 처리는 로컬에서</span>
+  </footer>
+</body>
+</html>

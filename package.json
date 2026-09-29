@@ -1,0 +1,19 @@
+{
+  "name": "mesh-remover",
+  "version": "1.0.0",
+  "description": "영상의 그물무늬(업스케일 격자 아티팩트)를 브라우저 안에서만 지우는 도구",
+  "scripts": {
+    "build": "node scripts/vendor.mjs",
+    "dev": "node scripts/vendor.mjs && node scripts/serve.mjs"
+  },
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@ffmpeg/core": "0.12.10",
+    "@ffmpeg/ffmpeg": "0.12.15",
+    "@ffmpeg/util": "0.12.2"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}

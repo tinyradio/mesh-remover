@@ -1,0 +1,5 @@
+node_modules/
+public/vendor/
+.DS_Store
+.vercel
+public/_test/
