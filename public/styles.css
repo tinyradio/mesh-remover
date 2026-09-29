@@ -351,8 +351,8 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 .panel-section { display: grid; gap: 16px; padding: 24px 20px; }
 .panel-section:not([hidden]) ~ .panel-section { border-top: 1px solid var(--line-alternative); }
 .panel-section h2 {
-  /* headline2 bold */
-  font-size: 17px; line-height: 1.412; font-weight: 700; color: var(--label-normal);
+  /* headline2 semibold — BGM OFF 섹션 제목과 동일 */
+  font-size: 17px; line-height: 24px; font-weight: 600; color: var(--label-strong);
 }
 
 /* WDS ActionArea (variant="strong", sticky background) */
@@ -494,34 +494,45 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 .text-field:focus { outline: none; border-color: var(--primary-normal); box-shadow: 0 0 0 1px var(--primary-normal); }
 .text-field[aria-invalid="true"] { border-color: var(--status-negative); box-shadow: 0 0 0 1px var(--status-negative); }
 
-/* Radio card */
-.choices { display: grid; gap: 8px; }
+/* Radio card — BGM OFF '분리 방식' 선택 카드와 동일 */
+.choices { display: flex; flex-direction: column; gap: 8px; }
 .choice {
-  display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 12px;
-  padding: 12px 16px; border-radius: 12px;
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 16px; border-radius: 12px;
   border: 1px solid var(--line-neutral); background: var(--bg-normal);
   cursor: pointer;
-  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+  transition: border-color 0.15s var(--ease);
 }
-.choice:hover { background: var(--fill-alternative); }
-.choice:has(input:checked) { border-color: var(--primary-normal); background: var(--primary-fill); }
+.choice:has(input:checked) { border-color: var(--primary-normal); }
 .choice:has(input:disabled) { cursor: not-allowed; opacity: 0.43; }
+/* WDS Radio (small): 20px 영역 안의 16px 원 */
 .choice input {
-  -webkit-appearance: none; appearance: none;
-  width: 20px; height: 20px; margin: 0;
-  border-radius: 50%; border: 1.5px solid var(--line-normal); background: var(--bg-normal);
+  -webkit-appearance: none; appearance: none; flex: none;
+  width: 16px; height: 16px; margin: 2px 0;
+  border-radius: 50%; border: 0;
+  background: var(--bg-normal);
+  box-shadow: inset 0 0 0 1.5px var(--line-normal);
   display: grid; place-items: center; cursor: inherit;
+  transition: background 0.15s var(--ease), box-shadow 0.15s var(--ease);
 }
-.choice input::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--static-white); transform: scale(0); transition: transform 0.15s var(--ease); }
-.choice input:checked { border-color: var(--primary-normal); background: var(--primary-normal); }
+.choice input::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--static-white); transform: scale(0); transition: transform 0.15s var(--ease); }
+.choice input:checked { background: var(--primary-normal); box-shadow: none; }
 .choice input:checked::after { transform: scale(1); }
-.choice input:focus-visible { outline: 2px solid var(--primary-normal); outline-offset: 2px; }
+.choice:hover input:not(:disabled) { box-shadow: inset 0 0 0 1.5px var(--line-normal), 0 0 0 6px color-mix(in srgb, var(--label-normal) 5%, transparent); }
+.choice:hover input:checked:not(:disabled) { box-shadow: 0 0 0 6px color-mix(in srgb, var(--label-normal) 5%, transparent); }
+.choice input:focus-visible { outline: 2px solid var(--primary-normal); outline-offset: 4px; }
+.choice > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .choice strong {
-  display: block; color: var(--label-normal);
-  /* label1 bold */
-  font-size: 14px; line-height: 1.429; letter-spacing: 0.0145em; font-weight: 700;
+  color: var(--label-strong);
+  /* label1 semibold */
+  font-size: 14px; line-height: 20px; letter-spacing: 0.0145em; font-weight: 600;
 }
-.choice em { display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: normal; color: var(--label-alternative); font-size: 12px; line-height: 1.334; letter-spacing: 0.0252em; }
+.choice em {
+  font-style: normal; color: var(--label-alternative);
+  /* caption1 regular */
+  font-size: 12px; line-height: 16px; letter-spacing: 0.0252em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* Buttons */
 .btn {
