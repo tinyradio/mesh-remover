@@ -307,6 +307,7 @@ async function openFile(file) {
     await loadPreview(best);
     $('startBtn').disabled = false;
     updateEstimate();
+    fitPanel();
     showToast(`"${file.name}" 첨부됨`);
   } catch (err) {
     if (!inWorkspace) { $('intro').hidden = false; $('workspace').hidden = true; }
@@ -609,6 +610,17 @@ view.addEventListener('dblclick', (e) => {
   if (state.view.zoom === 'fit') document.querySelector('[data-zoom="5"]').click();
   else render();
 });
+
+// 우측 패널 높이: 현재 화면 위치에서 아래 여백 24px까지 (보정 버튼이 항상 보이도록)
+const panelEl = document.querySelector('.panel');
+function fitPanel() {
+  if (!matchMedia('(min-width: 992px)').matches) { panelEl.style.removeProperty('--panel-max-h'); return; }
+  const top = Math.max(24, panelEl.getBoundingClientRect().top);
+  panelEl.style.setProperty('--panel-max-h', `${Math.max(320, innerHeight - top - 24)}px`);
+}
+addEventListener('scroll', fitPanel, { passive: true });
+addEventListener('resize', fitPanel);
+new ResizeObserver(fitPanel).observe(document.body);
 
 // ---------------------------------------------------------------------------
 // 설정
@@ -950,6 +962,7 @@ function showResult({ blob, audioNote }, { frames, stats, mode, seconds }) {
   $('resultNote').querySelector('p').textContent = notes.join(' ');
   $('actionBlock').hidden = true;
   $('resultBlock').hidden = false;
+  fitPanel();
   $('resultBlock').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 $('againBtn').addEventListener('click', resetResult);

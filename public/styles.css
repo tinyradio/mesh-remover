@@ -340,7 +340,30 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 /* ============================================================
    Panel cards
    ============================================================ */
-.panel { display: grid; gap: 12px; }
+.panel { display: grid; gap: 12px; align-content: start; }
+/* 하단 고정 영역: 보정 버튼·진행·결과·오류 */
+.panel-dock {
+  position: sticky; bottom: 0; z-index: 6;
+  display: grid; gap: 12px;
+  padding-top: 24px; margin-top: -12px;
+  background: linear-gradient(to top, var(--bg-alternative) calc(100% - 24px), transparent);
+}
+.panel-dock > .card { box-shadow: var(--shadow-medium); }
+.panel-dock > .msg { background-color: var(--bg-normal); background-image: linear-gradient(var(--bg-status-negative), var(--bg-status-negative)); }
+
+@media (min-width: 992px) {
+  /* 우측 패널: 화면 높이에 맞춰 고정하고 내부 스크롤 */
+  .panel {
+    position: sticky; top: 24px;
+    max-height: var(--panel-max-h, calc(100dvh - 48px));
+    overflow-y: auto; overscroll-behavior: contain;
+    padding: 4px 4px 0; margin: -4px -4px 0;
+    scrollbar-width: thin; scrollbar-color: var(--fill-strong) transparent;
+  }
+  .panel::-webkit-scrollbar { width: 6px; }
+  .panel::-webkit-scrollbar-thumb { background: var(--fill-strong); border-radius: 6px; }
+  .panel-dock { padding-bottom: 4px; }
+}
 .card {
   display: grid; gap: 16px;
   padding: 20px;
