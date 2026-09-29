@@ -579,6 +579,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
   font-size: 12px; line-height: 1.334; letter-spacing: 0.0252em; font-weight: 700;
 }
 .file-label .icon { font-size: 16px; }
+.attached .file-label { font-size: 14px; line-height: 20px; letter-spacing: 0.0145em; }
 .file-card .file-name { margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: normal; }
 .file-actions { display: flex; gap: 8px; }
 .file-score {
@@ -607,13 +608,6 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
   background: var(--bg-normal); box-shadow: var(--shadow-small); text-align: left;
 }
 .attached-text { min-width: 0; }
-.attached-name {
-  margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  color: var(--label-normal);
-  /* body1 bold */
-  font-size: 16px; line-height: 1.5; letter-spacing: 0.0057em; font-weight: 700;
-}
-.attached-size { color: var(--label-alternative); font-size: 13px; line-height: 1.385; letter-spacing: 0.0194em; }
 .drop-busy > p { color: var(--label-alternative); font-size: 14px; }
 
 /* Toast (inverse) */

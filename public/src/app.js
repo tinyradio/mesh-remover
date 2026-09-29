@@ -283,8 +283,6 @@ async function openFile(file) {
   const busy = $('dropBusy');
   const inWorkspace = !$('workspace').hidden;
   if (!inWorkspace) { busy.hidden = false; drop.querySelector('.drop-inner').hidden = true; }
-  $('dropBusyName').textContent = file.name;
-  $('dropBusySize').textContent = fmtBytes(file.size);
   $('dropBusyText').textContent = '엔진 준비 중';
   const note = drop.querySelector('.drop-note');
   note.textContent = DROP_NOTE;
