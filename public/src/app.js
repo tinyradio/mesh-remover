@@ -733,7 +733,11 @@ $('resetAll').addEventListener('click', resetAll);
 
 // 안내 팝업 (네이티브 <dialog>: Esc로 닫기·포커스 가두기 기본 제공)
 const infoDialog = $('infoDialog');
-$('infoBtn').addEventListener('click', () => infoDialog.showModal());
+$('infoBtn').addEventListener('click', () => {
+  infoDialog.showModal();
+  // 닫혀 있을 땐(display:none) 스크롤을 못 바꾸므로 연 직후에 맨 위로
+  infoDialog.querySelector('.modal-body').scrollTop = 0;
+});
 $('infoClose').addEventListener('click', () => infoDialog.close());
 infoDialog.addEventListener('click', (e) => {
   // 바깥(dimmer) 클릭 시 닫기
