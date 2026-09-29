@@ -609,8 +609,15 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 }
 .attached-text { min-width: 0; }
 .drop-busy > p { color: var(--label-alternative); font-size: 14px; }
-/* 진행 막대 폭 = 위 '파일을 첨부했어요' 카드 폭 */
-.drop-busy .progress-indeterminate { width: min(360px, 100%); }
+/* 불러오기 진행률: 폭 = 위 '파일을 첨부했어요' 카드 폭 */
+.load-progress { width: min(360px, 100%); display: grid; gap: 8px; }
+.load-progress .bar { height: 6px; }
+.load-progress .bar span { transition: width 0.25s linear; }
+.load-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.load-row > span:first-child { color: var(--label-alternative); font-size: 13px; line-height: 1.385; letter-spacing: 0.0194em; }
+.load-pct { color: var(--primary-normal); font-size: 13px; font-weight: 700; letter-spacing: 0.0194em; }
+.stage-loading .load-progress { width: min(360px, calc(100% - 48px)); }
+.stage-loading .load-row > span:first-child { color: var(--static-white); }
 
 /* Toast (inverse) */
 .toast {

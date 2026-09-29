@@ -93,6 +93,8 @@ const state = {
 if (new URLSearchParams(location.search).has('debug')) window.__mesh = { engine, pool, state };
 const canvases = { orig: document.createElement('canvas'), fixed: document.createElement('canvas'), diff: document.createElement('canvas') };
 
+// 엔진(wasm) 다운로드 진행률: 불러오기 진행 막대에서도 쓴다
+const engineLoad = { frac: 0, onchange: null };
 let engineReady = (async () => {
   const pill = $('engineStatus');
   const label = pill.querySelector('.label');
@@ -100,6 +102,8 @@ let engineReady = (async () => {
   try {
     await engine.load((loaded, total) => {
       label.textContent = total ? `엔진 받는 중 ${Math.round((loaded / total) * 100)}%` : `엔진 받는 중 ${fmtBytes(loaded)}`;
+      engineLoad.frac = total ? loaded / total : Math.min(0.95, loaded / 32e6);
+      engineLoad.onchange?.();
     });
     pill.dataset.state = 'ready';
     label.textContent = '엔진 준비됨';
@@ -249,33 +253,106 @@ document.addEventListener('drop', (e) => {
   if (f) openFile(f);
 });
 
+/**
+ * 영상 불러오기 진행률(%): 엔진 준비 → 영상 정보 읽기 → 그물무늬 분석 → 미리보기.
+ * 단계 사이에 기다리는 동안에도 막대가 멈춰 보이지 않도록 다음 단계 직전까지 천천히 차오른다.
+ */
+const loadUI = {
+  pct: 0, cap: 0, text: '', mode: 'drop', timer: null,
+  start(mode) {
+    this.mode = mode; this.pct = 0; this.cap = 0;
+    if (mode === 'stage') {
+      $('stageLoading').hidden = false;
+      $('stageProgress').hidden = false;
+      $('stageSpinner').hidden = true;
+      $('stageSpinnerText').hidden = true;
+    }
+    clearInterval(this.timer);
+    this.timer = setInterval(() => this.tick(), 120);
+    this.paint();
+  },
+  set(p, text) {
+    this.pct = Math.max(this.pct, p);
+    this.cap = Math.max(this.cap, this.pct);
+    if (text) this.text = text;
+    this.paint();
+  },
+  /** 실제 진행을 알 수 없는 구간: cap 직전까지 천천히 */
+  creep(cap, text) { this.cap = Math.max(this.cap, cap); if (text) this.text = text; this.paint(); },
+  tick() {
+    if (this.pct < this.cap - 0.2) { this.pct += Math.max(0.05, (this.cap - this.pct) * 0.025); this.paint(); }
+  },
+  paint() {
+    const v = Math.min(100, this.pct);
+    const pctText = `${Math.floor(v)}%`;
+    if (this.mode === 'drop') {
+      $('loadFill').style.width = `${v}%`;
+      $('loadPct').textContent = pctText;
+      $('dropBusyText').textContent = this.text;
+      $('dropBusy').querySelector('.load-progress').setAttribute('aria-valuenow', String(Math.floor(v)));
+    } else {
+      $('stageLoadFill').style.width = `${v}%`;
+      $('stageLoadPct').textContent = pctText;
+      $('stageLoadText').textContent = this.text;
+    }
+  },
+  stop() {
+    clearInterval(this.timer);
+    this.timer = null;
+    if (this.mode === 'stage') {
+      $('stageLoading').hidden = true;
+      $('stageProgress').hidden = true;
+      $('stageSpinner').hidden = false;
+      $('stageSpinnerText').hidden = false;
+    }
+  },
+};
+
 async function openFile(file) {
   if (state.running) return;
   clearError();
   const busy = $('dropBusy');
   const inWorkspace = !$('workspace').hidden;
   if (!inWorkspace) { busy.hidden = false; drop.querySelector('.drop-inner').hidden = true; }
-  $('dropBusyText').textContent = '엔진 준비 중';
   const note = drop.querySelector('.drop-note');
   note.textContent = DROP_NOTE;
   note.style.color = '';
   if (inWorkspace) showToast(`"${file.name}" 여는 중`);
+  loadUI.start(inWorkspace ? 'stage' : 'drop');
   try {
+    // 1) 엔진 준비 0~15%
+    loadUI.set(0, '엔진 준비 중');
+    engineLoad.onchange = () => loadUI.set(engineLoad.frac * 15);
     await engineReady;
-    $('dropBusyText').textContent = '영상 정보를 읽는 중';
+    engineLoad.onchange = null;
+    // 2) 영상 정보 읽기 15~35%
+    loadUI.set(15);
+    loadUI.creep(33, '영상 정보를 읽는 중');
     const info = await engine.open(file);
     setupOriginalPlayer(file);
     state.info = info;
     state.detected = []; state.spectrum = null;
     resetResult();
     renderFileInfo();
-    $('intro').hidden = true;
-    $('workspace').hidden = false;
     setupScrub();
     sizeStage();
     await pushMask();
-    const best = await analyze();
+    // 3) 그물무늬 분석 35~90%
+    loadUI.set(35, '그물무늬 분석 중');
+    loadUI.creep(70); // 첫 샘플 디코드(키프레임이 드문 영상은 한 번에 순차 디코드)가 길 수 있음
+    const best = await analyze((done, total) => {
+      const base = 35 + (55 * done) / total;
+      loadUI.set(base, `그물무늬 분석 중 (${done}/${total})`);
+      if (done < total) loadUI.creep(35 + (55 * (done + 1)) / total - 1);
+    });
+    // 4) 미리보기 90~100%
+    loadUI.set(90);
+    loadUI.creep(98, '미리보기 준비 중');
     await loadPreview(best);
+    loadUI.set(100, '완료');
+    $('intro').hidden = true;
+    $('workspace').hidden = false;
+    render();
     $('startBtn').disabled = false;
     updateEstimate();
     fitPanel();
@@ -289,6 +366,8 @@ async function openFile(file) {
       note.style.color = 'var(--status-negative)';
     }
   } finally {
+    engineLoad.onchange = null;
+    loadUI.stop();
     busy.hidden = true;
     drop.querySelector('.drop-inner').hidden = false;
   }
@@ -327,7 +406,7 @@ function escapeHTML(s) {
 // ---------------------------------------------------------------------------
 // 분석: 여러 프레임의 평균 주파수 지도에서 그물무늬를 찾는다
 // ---------------------------------------------------------------------------
-async function analyze() {
+async function analyze(onProgress) {
   const i = state.info;
   const badge = $('scoreBadge');
   badge.textContent = '분석 중';
@@ -348,19 +427,20 @@ async function analyze() {
     for (let k = 0; k < p.length; k++) total[k] += p[k];
     const score = analyzeSpectrum(p, { maxPeriod: state.settings.maxPeriod }).meshScore;
     if (score > best.score) best = { index: f, score };
+    sampled++;
+    onProgress?.(sampled, idx.length);
   };
   let sampled = 0;
   if (cheap.length >= 3) {
     for (const f of idx) {
       const { data, frames } = await engine.decode(f, 1);
-      if (frames) { await addSample(f, data.slice(0, i.ySize)); sampled++; }
+      if (frames) await addSample(f, data.slice(0, i.ySize));
     }
   }
   if (!sampled) {
     // 키프레임이 드물면 seek마다 처음부터 디코드하게 되므로 한 번의 순차 디코드로 모두 뽑는다
     const { data, frames } = await engine.decodeSelect(idx);
     for (let j = 0; j < frames; j++) await addSample(idx[j], data.slice(j * i.frameBytes, j * i.frameBytes + i.ySize));
-    sampled = frames;
   }
   if (!sampled) throw new Error('분석할 프레임을 읽지 못했어요. 지원하지 않는 형식일 수 있어요.');
   state.spectrum = analyzeSpectrum(total, { maxPeriod: state.settings.maxPeriod });
