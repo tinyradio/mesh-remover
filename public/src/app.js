@@ -584,8 +584,7 @@ function render() {
   const W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
   if (view.width !== W || view.height !== H) { view.width = W; view.height = H; }
   const ctx = view.getContext('2d');
-  ctx.fillStyle = '#0F0F10';
-  ctx.fillRect(0, 0, W, H);
+  ctx.clearRect(0, 0, W, H); // 투명하게 비움: 영상이 없는 곳에 어두운 색이 남지 않도록
   if (!canvases.orig.width) return;
   clampCenter();
   const v = state.view;
