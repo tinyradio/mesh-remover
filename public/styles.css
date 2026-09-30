@@ -264,7 +264,7 @@ button { font: inherit; color: inherit; }
 .stage::after {
   content: ""; position: absolute; inset: 0; z-index: 3;
   border-radius: inherit;
-  box-shadow: inset 0 0 0 1px var(--line-neutral);
+  box-shadow: inset 0 0 0 1px rgba(112, 115, 124, 0.1); /* coolNeutral.50 · 10% */
   pointer-events: none;
 }
 .stage canvas { width: 100%; height: 100%; display: block; cursor: ew-resize; image-rendering: pixelated; }
