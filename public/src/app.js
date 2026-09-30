@@ -316,7 +316,7 @@ async function openFile(file) {
   if (!inWorkspace) { busy.hidden = false; drop.querySelector('.drop-inner').hidden = true; }
   const note = drop.querySelector('.drop-note');
   note.textContent = DROP_NOTE;
-  note.style.color = '';
+  note.hidden = true;
   if (inWorkspace) showToast(`"${file.name}" 여는 중`);
   loadUI.start(inWorkspace ? 'stage' : 'drop');
   try {
@@ -363,7 +363,7 @@ async function openFile(file) {
     if (!inWorkspace) {
       // 인트로 화면에서도 오류를 보여준다
       note.textContent = `열 수 없어요: ${err.message || err}`;
-      note.style.color = 'var(--status-negative)';
+      note.hidden = false;
     }
   } finally {
     engineLoad.onchange = null;

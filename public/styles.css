@@ -195,47 +195,47 @@ button { font: inherit; color: inherit; }
   font-size: 14px; line-height: 1.429; letter-spacing: 0.0145em;
 }
 
-/* Drop zone */
+/* Drop zone — BGM OFF 업로드 영역과 동일 */
 .drop {
   position: relative; display: block; cursor: pointer;
-  border-radius: 16px;
+  padding: 24px; border-radius: 16px;
   background: var(--bg-normal);
-  box-shadow: var(--shadow-small);
-  padding: 8px;
-  transition: box-shadow 0.2s var(--ease);
+  box-shadow: var(--shadow-xsmall);
 }
-.drop:hover { box-shadow: var(--shadow-medium); }
-.drop:focus-visible { outline: 2px solid var(--primary-normal); outline-offset: 2px; }
+.drop:focus-visible { outline: none; }
+.drop:focus-visible .drop-inner { outline: 2px solid var(--primary-normal); outline-offset: 2px; }
 .drop-inner, .drop-busy {
   min-height: 360px;
-  border: 1.5px dashed var(--line-normal);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 32px 16px; text-align: center;
+  border: 1px dashed var(--line-normal);
   border-radius: 12px;
   background: var(--bg-alternative);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; padding: 32px; text-align: center;
-  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+  transition: border-color 0.15s var(--ease);
 }
-.drop:hover .drop-inner, .drop.over .drop-inner { border-color: var(--primary-normal); background: var(--primary-fill); }
+.drop:hover .drop-inner, .drop.over .drop-inner { border-color: var(--primary-normal); }
 .drop-icon {
   width: 56px; height: 56px; border-radius: 16px; margin-bottom: 8px;
   display: grid; place-items: center;
-  background: var(--primary-fill-strong); color: var(--primary-normal);
+  background: var(--fill-alternative); color: var(--primary-normal);
 }
 .drop-icon .icon { font-size: 28px; }
 .drop-title {
-  /* heading2 bold */
-  font-size: 20px; line-height: 1.4; letter-spacing: -0.012em; font-weight: 700;
+  color: var(--label-normal);
+  /* headline1 semibold */
+  font-size: 18px; line-height: 26px; letter-spacing: -0.002em; font-weight: 600;
 }
-.drop-sub { color: var(--label-alternative); font-size: 14px; line-height: 1.429; letter-spacing: 0.0145em; }
-.drop-btn { margin-top: 12px; pointer-events: none; }
+.drop-sub {
+  color: var(--label-alternative);
+  /* label2 regular */
+  font-size: 13px; line-height: 18px; letter-spacing: 0.0194em;
+}
 .drop-note {
-  margin-top: 16px; max-width: 280px;
-  color: var(--label-assistive);
-  /* caption1 */
-  font-size: 12px; line-height: 1.334; letter-spacing: 0.0252em;
+  margin-top: 8px; max-width: 320px;
+  color: var(--status-negative);
+  font-size: 13px; line-height: 18px; letter-spacing: 0.0194em;
 }
 .drop-busy { cursor: progress; }
-.drop-busy p { color: var(--label-alternative); font-size: 14px; }
 
 /* Indeterminate progress (WDS Loading 대체) */
 .progress-indeterminate { width: min(240px, 70%); height: 4px; border-radius: 4px; background: var(--fill-normal); overflow: hidden; }
@@ -552,7 +552,6 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 .btn-primary:disabled { background: var(--interaction-disable); color: var(--label-assistive); cursor: not-allowed; }
 .btn-outlined { background: var(--bg-normal); color: var(--label-normal); box-shadow: inset 0 0 0 1px var(--line-neutral); }
 .btn-outlined:hover:not(:disabled) { background: var(--fill-alternative); }
-.drop-btn { width: auto; }
 
 .bar { height: 8px; border-radius: 8px; background: var(--fill-normal); overflow: hidden; }
 .bar span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--primary-normal); transition: width 0.3s var(--ease); }
@@ -595,10 +594,6 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
 .text-btn-assistive { color: var(--label-alternative); font-weight: 500; }
 .text-btn-assistive:hover { color: var(--label-normal); }
 
-/* 드래그 중: 놓을 수 있다는 걸 분명히 */
-.drop.over { box-shadow: 0 0 0 2px var(--primary-normal), var(--shadow-medium); }
-.drop.over .drop-inner { border-style: solid; }
-.drop.over .drop-icon { background: var(--primary-normal); color: var(--static-white); }
 
 /* 첨부 직후 상태 */
 .drop-busy { gap: 16px; }
@@ -834,7 +829,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: 0.43; }
   main { padding: 0 16px; }
   .topbar-inner { padding: 0 16px; }
   .intro { min-height: calc(100dvh - 64px); padding: 24px 0; }
-  .drop-inner, .drop-busy { min-height: 320px; }
+  .drop-inner, .drop-busy { min-height: 240px; }
   .workspace { padding-top: 16px; }
   .hint { display: none; }
   .modal { --modal-margin: 20px; }
